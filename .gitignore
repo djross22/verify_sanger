@@ -1,0 +1,5 @@
+__pycache__
+
+verify_sanger.egg-info/**
+*.pkl
+
