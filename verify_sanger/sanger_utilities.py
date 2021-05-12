@@ -339,7 +339,7 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 ax2=None, 
                 offset=0, 
                 quality_only=False, 
-                reverse_complement=False,
+                letters_on_top=False,
                 is_trimmed=False):
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
     
@@ -348,18 +348,9 @@ def plot_sanger(sequence, start_base, end_base, ax,
     channel_data = [raw_data[x] for x in sanger_channels]
     peak_locations = np.array(raw_data['PLOC1'])
     pal = sns.color_palette('dark')
-    if reverse_complement:
-        channel_colors = [pal[8]] + [pal[-1]] + [pal[1]] + [pal[0]]
-        plot_sequence = sequence.reverse_complement()
-        temp = []
-        for data in channel_data:
-            temp.append(data[::-1])
-        channel_data = temp
-        peak_locations = peak_locations[::-1]
-        peak_locations = len(channel_data[0]) - peak_locations - 1
-    else:
-        channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
-        plot_sequence = sequence
+    
+    channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
+    plot_sequence = sequence
     
     # left and right edges of each chromatogram peak
     peak_left = peak_locations
@@ -384,12 +375,12 @@ def plot_sanger(sequence, start_base, end_base, ax,
         linewidth = None
     else:
         linewidth = 0.5
-    if reverse_complement:
-        ax.tick_params(labelbottom=True,labeltop=False)
+    if letters_on_top:
+        ax.tick_params(labelbottom=True, labeltop=False)
         v_text = 'bottom'
         y_text = 1.02
     else:
-        ax.tick_params(labelbottom=False,labeltop=True)
+        ax.tick_params(labelbottom=False, labeltop=True)
         v_text = 'top'
         y_text = -0.03
     qual_x = np.array( [ np.array([x - 0.5]*2) for x in base_positions ] ).flatten()
