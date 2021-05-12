@@ -300,6 +300,41 @@ def slice_sanger(sequence, b0=0, b1=None):
     return new_seq
 
 
+def sanger_reverse_complement(sequence):
+    """
+    This method returns the reverse-complement of Sanger data, 
+    including the chromatorgram data and peak locations for plotting
+
+    Parameters
+    ----------
+    sequence : Biopython sequence object
+        The sequence to be reverse-complemented.
+
+    Returns
+    -------
+    new_seq : Biopython sequence object
+        The reverse-complement sequence.
+
+    """
+    
+    # Built-in slicing handles sequence and quality information
+    new_seq = sequence.reverse_complement()
+    new_seq.annotations["abif_raw"] = {}
+    
+    # chromatogram data and peak locations needs to be added on
+    raw_data = sequence.annotations["abif_raw"]
+    
+    for ch, new_ch in zip(sanger_channels, sanger_channels[::-1]):
+        new_seq.annotations["abif_raw"][new_ch] = raw_data[ch][: : -1]
+    
+    peak_locations = np.array(raw_data['PLOC1'])
+    
+    peak_locations = tuple(len(raw_data[ch]) - 1 - peak_locations[: : -1])
+    new_seq.annotations["abif_raw"]['PLOC1'] = peak_locations
+        
+    return new_seq
+
+
 def plot_sanger(sequence, start_base, end_base, ax, 
                 ax2=None, 
                 offset=0, 
