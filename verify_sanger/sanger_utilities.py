@@ -32,6 +32,7 @@ plt.rcParams['ytick.labelsize'] = 16
 plt.rcParams['legend.fontsize'] = 14
 plt.rcParams['legend.edgecolor'] = 'k'
 
+sanger_channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
 
 
 def mott_trimming_fr(record, trim=0.05):
@@ -245,6 +246,7 @@ def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
     x, y = num_matches(alignment)
     return (x >= min_matches) and (y/x <= max_mismatch_ratio)
 
+
 def slice_sanger(sequence, b0=0, b1=None):
     """
     This method slices Sanger data, including the chromatorgram data
@@ -275,8 +277,6 @@ def slice_sanger(sequence, b0=0, b1=None):
     
     # chromatogram data and peak locations needs to be added on
     raw_data = sequence.annotations["abif_raw"]
-    channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
-    #channel_data = [raw_data[x] for x in channels]
     peak_locations = np.array(raw_data['PLOC1'])
     
     # left and right edges of each chromatogram peak
@@ -294,7 +294,7 @@ def slice_sanger(sequence, b0=0, b1=None):
     peak_locations = tuple(peak_locations[b0: b1] - chrom_start)
     new_seq.annotations["abif_raw"]['PLOC1'] = peak_locations
     
-    for ch in channels:
+    for ch in sanger_channels:
         new_seq.annotations["abif_raw"][ch] = raw_data[ch][chrom_start: chrom_end+1]
         
     return new_seq
@@ -310,8 +310,7 @@ def plot_sanger(sequence, start_base, end_base, ax,
     
     # chromatogram data
     raw_data = sequence.annotations["abif_raw"]
-    channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
-    channel_data = [raw_data[x] for x in channels]
+    channel_data = [raw_data[x] for x in sanger_channels]
     peak_locations = np.array(raw_data['PLOC1'])
     pal = sns.color_palette('dark')
     if reverse_complement:
