@@ -15,6 +15,24 @@ from Bio import SeqIO
 from Bio import AlignIO
 
 import matplotlib.pyplot as plt
+import matplotlib.transforms as transforms
+from matplotlib.ticker import MultipleLocator
+
+import seaborn as sns
+sns.set()
+# set global default style:
+sns.set_style("white")
+sns.set_style("ticks", {'xtick.direction':'in', 'xtick.top':True, 'ytick.direction':'in', 'ytick.right':True, })
+#sns.set_style({"axes.labelsize": 20, "xtick.labelsize" : 16, "ytick.labelsize" : 16})
+
+plt.rcParams['axes.labelsize'] = 20
+plt.rcParams['xtick.labelsize'] = 16
+plt.rcParams['ytick.labelsize'] = 16
+
+plt.rcParams['legend.fontsize'] = 14
+plt.rcParams['legend.edgecolor'] = 'k'
+
+
 
 def mott_trimming_fr(record, trim=0.05):
     """
@@ -281,3 +299,101 @@ def slice_sanger(sequence, b0=0, b1=None):
         
     return new_seq
 
+
+def plot_sanger(sequence, start_base, end_base, ax, 
+                ax2=None, 
+                offset=0, 
+                quality_only=False, 
+                reverse_complement=False,
+                is_trimmed=False):
+    # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
+    
+    # chromatogram data
+    raw_data = sequence.annotations["abif_raw"]
+    channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
+    channel_data = [raw_data[x] for x in channels]
+    peak_locations = np.array(raw_data['PLOC1'])
+    pal = sns.color_palette('dark')
+    if reverse_complement:
+        channel_colors = [pal[8]] + [pal[-1]] + [pal[1]] + [pal[0]]
+        plot_sequence = sequence.reverse_complement()
+        temp = []
+        for data in channel_data:
+            temp.append(data[::-1])
+        channel_data = temp
+        peak_locations = peak_locations[::-1]
+        peak_locations = len(channel_data[0]) - peak_locations - 1
+    else:
+        channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
+        plot_sequence = sequence
+    
+    # left and right edges of each chromatogram peak
+    peak_left = peak_locations
+    peak_left = (peak_left[:-1] + peak_left[1:])/2
+    peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
+    peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
+    peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
+    peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
+    
+    # Called sequence
+    dna_seq = str(plot_sequence.seq)
+    
+    # Quality scores
+    qual = plot_sequence.letter_annotations['phred_quality']
+    
+    # Plot the quality score behind everything else 
+    base_positions = [i for i in range(start_base, end_base+1)]
+    base_calls = dna_seq[start_base-1:end_base]
+    ax.set_yticks([])
+    if (end_base - start_base) < 200:
+        ax.xaxis.set_minor_locator(MultipleLocator(1))
+        linewidth = None
+    else:
+        linewidth = 0.5
+    if reverse_complement:
+        ax.tick_params(labelbottom=True,labeltop=False)
+        v_text = 'bottom'
+        y_text = 1.02
+    else:
+        ax.tick_params(labelbottom=False,labeltop=True)
+        v_text = 'top'
+        y_text = -0.03
+    qual_x = np.array( [ np.array([x - 0.5]*2) for x in base_positions ] ).flatten()
+    qual_x = np.append(qual_x, [base_positions[-1]+0.5]*2)
+    qual_y = np.array( [ np.array([x]*2) for x in qual[start_base-1:end_base] ] ).flatten()
+    qual_y = np.append(qual_y, 0)
+    qual_y = np.insert(qual_y, 0, 0)
+    if is_trimmed:
+        color = sns.color_palette()[3]
+        f_alpha = 0.05
+        l_alpha = .3
+    else:
+        color = sns.color_palette()[2]
+        f_alpha = 0.1
+        l_alpha = 1
+    ax.fill_between(qual_x+offset, qual_y, color=color, alpha=f_alpha, zorder=-2)
+    ax.plot(qual_x[1:-1]+offset, qual_y[1:-1], color=color, alpha=l_alpha, zorder=-1, linewidth=linewidth)
+    
+    ax.autoscale(enable=True)
+    ylim = ax.get_ylim()
+    ax.set_ylim(0, ylim[1])
+    
+    if not quality_only:
+        ax2.set_yticks([])
+        trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+        if is_trimmed:
+            alpha = 0.5
+        else:
+            alpha = 1
+        for center, base in zip(base_positions, base_calls):
+            ax.text(center+offset, y_text, base, horizontalalignment='center', verticalalignment=v_text,
+                   fontname="Courier New", size=20, transform=trans, alpha=alpha)
+            left = peak_left[center-1]
+            right = peak_right[center-1]
+            for y_data, c in zip(channel_data, channel_colors):
+                y = y_data[left:right+1]
+                x = np.linspace(center-0.5, center+0.5, len(y)) + offset
+                ax2.plot(x, y, color=c, alpha=alpha);
+    
+    
+    
