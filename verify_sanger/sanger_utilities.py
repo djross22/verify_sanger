@@ -227,3 +227,57 @@ def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
     x, y = num_matches(alignment)
     return (x >= min_matches) and (y/x <= max_mismatch_ratio)
 
+def slice_sanger(sequence, b0=0, b1=None):
+    """
+    This method slices Sanger data, including the chromatorgram data
+    and peak locations for plotting
+
+    Parameters
+    ----------
+    sequence : Biopython sequence object
+        The sequence to be sliced.
+    b0 : int, optional
+        The first index for the slice. The default is 0.
+    b1 : int, optional
+        The end index for the slice. The default is None.
+
+    Returns
+    -------
+    new_seq : Biopython sequence object
+        The sliced sequence.
+
+    """
+    # If b0 and/or b1 are None, still trim chromatorgram data
+    if b1 == None:
+        b1 = len(sequence)
+    
+    # Built-in slicing handles sequenc and quality information
+    new_seq = sequence[b0: b1]
+    new_seq.annotations["abif_raw"] = {}
+    
+    # chromatogram data and peak locations needs to be added on
+    raw_data = sequence.annotations["abif_raw"]
+    channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
+    #channel_data = [raw_data[x] for x in channels]
+    peak_locations = np.array(raw_data['PLOC1'])
+    
+    # left and right edges of each chromatogram peak
+    peak_left = peak_locations
+    peak_left = (peak_left[:-1] + peak_left[1:])/2
+    peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
+    peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
+    peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
+    peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
+    
+    # new start and end of chromatogram
+    chrom_start = peak_left[b0]
+    chrom_end = peak_right[b1-1]
+    
+    peak_locations = tuple(peak_locations[b0: b1] - chrom_start)
+    new_seq.annotations["abif_raw"]['PLOC1'] = peak_locations
+    
+    for ch in channels:
+        new_seq.annotations["abif_raw"][ch] = raw_data[ch][chrom_start: chrom_end+1]
+        
+    return new_seq
+
