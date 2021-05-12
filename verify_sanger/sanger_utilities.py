@@ -16,7 +16,7 @@ from Bio import AlignIO
 
 import matplotlib.pyplot as plt
 
-def mott_trimming_fr(record, limit=0.05):
+def mott_trimming_fr(record, trim=0.05):
     """
     This method trims the low-quality reads from the ends of each read
     using Mott's algorithm in both directions and returns the idices
@@ -26,7 +26,7 @@ def mott_trimming_fr(record, limit=0.05):
     ----------
     record : Biopython sequence object to be trimmed
         
-    limit : float
+    trim : float
         A value between 0 and 1 indicating the error probability thershhold
         used for the sequence trimming
 
@@ -39,7 +39,7 @@ def mott_trimming_fr(record, limit=0.05):
     
     # Forward direction
     qual = np.array(record.letter_annotations['phred_quality'])
-    score_list = limit - (10 ** (qual / -10.0))
+    score_list = trim - (10 ** (qual / -10.0))
     summed_score_list = []
     for x in score_list:
         if len(summed_score_list)>0:
@@ -61,7 +61,7 @@ def mott_trimming_fr(record, limit=0.05):
     # Reverse direction
     record_r = record.reverse_complement()
     qual = np.array(record_r.letter_annotations['phred_quality'])
-    score_list = limit - (10 ** (qual / -10.0))
+    score_list = trim - (10 ** (qual / -10.0))
     summed_score_list = []
     for x in score_list:
         if len(summed_score_list)>0:
@@ -153,8 +153,8 @@ def align_sanger(record1, record2, trim=0.01, verbose=True):
     aligner.query_internal_extend_gap_score = -3
     
     if trim is not None:
-        trim_ind1 = mott_trimming_fr(record1, limit=trim)
-        trim_ind2 = mott_trimming_fr(record2, limit=trim)
+        trim_ind1 = mott_trimming_fr(record1, trim=trim)
+        trim_ind2 = mott_trimming_fr(record2, trim=trim)
         new_record1 = record1[trim_ind1[0]:trim_ind1[1]+1]
         new_record2 = record2[trim_ind2[0]:trim_ind2[1]+1]
     else:
