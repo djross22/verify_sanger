@@ -344,32 +344,34 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 ax2=None, 
                 offset=0, 
                 quality_only=False, 
+                letters_on_bottom=True,
                 letters_on_top=False,
-                is_trimmed=False):
+                is_trimmed=False,
+                include_coverage=False):
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
     
-    # chromatogram data
-    raw_data = sequence.annotations["abif_raw"]
-    channel_data = [raw_data[x] for x in sanger_channels]
-    peak_locations = np.array(raw_data['PLOC1'])
-    pal = sns.color_palette('dark')
-    
-    channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
-    plot_sequence = sequence
-    
-    # left and right edges of each chromatogram peak
-    peak_left = peak_locations
-    peak_left = (peak_left[:-1] + peak_left[1:])/2
-    peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
-    peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
-    peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
-    peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
+    if not quality_only:
+        # chromatogram data
+        raw_data = sequence.annotations["abif_raw"]
+        channel_data = [raw_data[x] for x in sanger_channels]
+        peak_locations = np.array(raw_data['PLOC1'])
+        pal = sns.color_palette('dark')
+        
+        channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
+        
+        # left and right edges of each chromatogram peak
+        peak_left = peak_locations
+        peak_left = (peak_left[:-1] + peak_left[1:])/2
+        peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
+        peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
+        peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
+        peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
     
     # Called sequence
-    dna_seq = str(plot_sequence.seq)
+    dna_seq = str(sequence.seq)
     
     # Quality scores
-    qual = plot_sequence.letter_annotations['phred_quality']
+    qual = sequence.letter_annotations['phred_quality']
     
     # Plot the quality score behind everything else 
     base_positions = [i for i in range(start_base, end_base+1)]
@@ -380,14 +382,6 @@ def plot_sanger(sequence, start_base, end_base, ax,
         linewidth = None
     else:
         linewidth = 0.5
-    if letters_on_top:
-        ax.tick_params(labelbottom=True, labeltop=False)
-        v_text = 'bottom'
-        y_text = 1.02
-    else:
-        ax.tick_params(labelbottom=False, labeltop=True)
-        v_text = 'top'
-        y_text = -0.03
     qual_x = np.array( [ np.array([x - 0.5]*2) for x in base_positions ] ).flatten()
     qual_x = np.append(qual_x, [base_positions[-1]+0.5]*2)
     qual_y = np.array( [ np.array([x]*2) for x in qual[start_base-1:end_base] ] ).flatten()
@@ -401,23 +395,44 @@ def plot_sanger(sequence, start_base, end_base, ax,
         color = sns.color_palette()[2]
         f_alpha = 0.1
         l_alpha = 1
-    ax.fill_between(qual_x+offset, qual_y, color=color, alpha=f_alpha, zorder=-2)
-    ax.plot(qual_x[1:-1]+offset, qual_y[1:-1], color=color, alpha=l_alpha, zorder=-1, linewidth=linewidth)
+    ax.fill_between(qual_x+offset, qual_y, color=color, alpha=f_alpha, zorder=-20)
+    ax.plot(qual_x[1:-1]+offset, qual_y[1:-1], color=color, alpha=l_alpha, zorder=-19, linewidth=linewidth)
+    if include_coverage:
+        cover = sequence.letter_annotations['coverage']
+        y = np.array( [ np.array([x]*2) for x in cover[start_base-1:end_base] ] ).flatten()
+        y = np.append(y, 0)
+        y = np.insert(y, 0, 0)
+        y = y * max(qual_y)/max(y) / 3
+        color = sns.color_palette()[0]
+        ax.fill_between(qual_x+offset, y, color=color, alpha=f_alpha, zorder=-10)
+        ax.plot(qual_x[1:-1]+offset, y[1:-1], color=color, alpha=l_alpha, zorder=-9, linewidth=linewidth)
     
     ax.autoscale(enable=True)
     ylim = ax.get_ylim()
     ax.set_ylim(0, ylim[1])
     
-    if not quality_only:
-        ax2.set_yticks([])
-        trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
-        if is_trimmed:
-            alpha = 0.5
-        else:
-            alpha = 1
-        for center, base in zip(base_positions, base_calls):
-            ax.text(center+offset, y_text, base, horizontalalignment='center', verticalalignment=v_text,
+    ax2.set_yticks([])
+    trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+    if is_trimmed:
+        alpha = 0.5
+    else:
+        alpha = 1
+    ax.tick_params(labelbottom=True, labeltop=True)
+    if letters_on_bottom:
+        ax.tick_params(labelbottom=False)
+    if letters_on_top:
+        ax.tick_params(labeltop=False)
+        
+    for center, base in zip(base_positions, base_calls):
+        if letters_on_bottom:
+            ax.text(center+offset, -0.03, base, horizontalalignment='center', verticalalignment='top',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
+        if letters_on_top:
+            ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
+                   fontname="Courier New", size=20, transform=trans, alpha=alpha)
+    
+    if not quality_only:
+        for center, base in zip(base_positions, base_calls):
             left = peak_left[center-1]
             right = peak_right[center-1]
             for y_data, c in zip(channel_data, channel_colors):
