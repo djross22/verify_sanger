@@ -130,13 +130,12 @@ def num_matches(align1):
     
     return match_count, mismatch_count
     
-def align_sanger(record1, record2, trim=0.01, verbose=True):
+def align_sanger(record1, record2, trim=None, verbose=True):
     """
     This method performs a pairwise alignment of two very similar reads.
     
     The method first trims the low-quality reads from the ends of each read
-    (if trim != None), and then aligns record1 with the reverse complement of
-    record 2
+    (if trim != None), and then aligns record1 with record 2
     
     Parameters
     ----------
@@ -180,9 +179,8 @@ def align_sanger(record1, record2, trim=0.01, verbose=True):
         new_record1 = record1
         new_record2 = record2
     
-    alignments = aligner.align(new_record1.seq, new_record2.seq.reverse_complement())
+    alignments = aligner.align(new_record1.seq, new_record2.seq)
     if verbose: print(f'{len(alignments)} alignment(s) found with score: {alignments.score}')
-    
     
     align1 = alignments[0]
     if verbose: print(f'{align1.aligned}')
