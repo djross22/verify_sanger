@@ -268,6 +268,13 @@ def slice_sanger(sequence, b0=0, b1=None):
     # If b0 and/or b1 are None, still trim chromatorgram data
     if b1 == None:
         b1 = len(sequence)
+        
+    # This method doesn't support negative number indices, 
+    #     or b0, b1>=len(sequence)
+    if (b0<0) or (b1>=len(sequence)):
+        raise ValueError(f'b0 = {b0} but it must be between 0 and the seqeunce length - 1 ({len(sequence)-1})')
+    if (b1<0) or (b1>=len(sequence)):
+        raise ValueError(f'b1 = {b1} but it must be between 0 and the seqeunce length - 1 ({len(sequence)-1})')
     
     # Built-in slicing handles sequenc and quality information
     new_seq = sequence[b0: b1]
