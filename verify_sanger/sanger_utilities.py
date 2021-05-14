@@ -334,7 +334,7 @@ def make_blocks(block, breaks):
     return temp
 
 
-def zoom_out_plot(align1):
+def zoom_out_plot(align1, title=None):
     f_block = align1.f_ind
     f_block = f_block[f_block!='none']
     f_breaks = np.where(f_block=='gap')[0]
@@ -348,6 +348,8 @@ def zoom_out_plot(align1):
     
     plt.rcParams["figure.figsize"] = [12, 4]
     fig, axs = plt.subplots(3, 1)
+    if title is not None:
+        fig.suptitle(title, size=20, verticalalignment='bottom')
     axs[0].get_shared_x_axes().join(*axs)
     #axs[0].get_shared_y_axes().join(*axs)
     ax2 = [ ax.twinx()  for ax in axs ]
@@ -384,7 +386,7 @@ def zoom_out_plot(align1):
         ax.set_position(box)
         
 
-def zoom_in_plot(align1, zoom_ind, zoom_span=10):
+def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False):
     
     f_block = align1.f_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
     f_block = f_block[f_block!='none']
@@ -395,18 +397,21 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10):
     f_block = make_blocks(f_block, f_breaks)
     r_block = make_blocks(r_block, r_breaks)
     if (r_block is None) or (f_block is None):
-        print('No good sequence blocks to plot')
+        if verbose: print('No good sequence blocks to plot')
         return
     f_block = [x for x in f_block if 'gap' not in x]
     r_block = [x for x in r_block if 'gap' not in x]
     f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
     r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
-    print(align1.align_str[0][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
-    print(align1.align_str[1][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
-    print(align1.align_str[2][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+    if verbose:
+        print(align1.align_str[0][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+        print(align1.align_str[1][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+        print(align1.align_str[2][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
     
     plt.rcParams["figure.figsize"] = [12, 5]
     fig, axs = plt.subplots(3, 1)
+    if title is not None:
+        fig.suptitle(title, size=20, verticalalignment='bottom')
     axs[0].get_shared_x_axes().join(*axs)
     axs[0].get_shared_y_axes().join(*axs)
     ax2 = [ ax.twinx()  for ax in axs ]
