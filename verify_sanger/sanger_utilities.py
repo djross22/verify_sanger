@@ -13,6 +13,7 @@ import numpy as np
 from Bio import Align 
 from Bio import SeqIO
 from Bio import AlignIO
+from Bio.SeqRecord import SeqRecord
 
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
@@ -202,8 +203,111 @@ def align_sanger(record1, record2, verbose=True):
     if verbose: print(f'{count} matches in alignment')
     count = match_str.count('.')
     if verbose: print(f'{count} mismatches in alignment')
-    #print(align1)
-    return alignments
+    
+    # Find mapping between indices for consensus and record1
+    f_qual = []
+    f_ind = []
+    i = 0
+    input_qual = record1.letter_annotations['phred_quality']
+    start_gap = True
+    for ch in align_str[0]:
+        if ch == '-':
+            if start_gap:
+                q = 0
+                ind = 'none' #-1
+            else:
+                if i < len(input_qual):
+                    q = (input_qual[i-1] + input_qual[i])/2
+                    ind = 'gap' #(i-1 + i)/2
+                else:
+                    q = 0
+                    ind = 'none' #-1
+        else:
+            q = input_qual[i]
+            ind = i
+            i += 1
+            start_gap = False
+        f_qual.append(q)
+        f_ind.append(ind)
+    f_ind = np.array(f_ind, dtype=object)
+    
+    # Find mapping between indices for consensus and record2
+    r_qual = []
+    r_ind = []
+    i = 0
+    input_qual = record2.letter_annotations['phred_quality']
+    start_gap = True
+    for ch in align_str[2]:
+        if ch == '-':
+            if start_gap:
+                q = 0
+                ind = 'none' #-1
+            else:
+                if i < len(input_qual):
+                    q = (input_qual[i-1] + input_qual[i])/2
+                    ind = 'gap' #(i-1 + i)/2
+                else:
+                    q = 0
+                    ind = 'none' #-1
+        else:
+            q = input_qual[i]
+            ind = i
+            i += 1
+            start_gap = False
+        r_qual.append(q)
+        r_ind.append(ind)
+    r_ind = np.array(r_ind, dtype=object)
+    
+    # Find consensus (using quality scores), coverage, 
+    #     and the indices for any mismatches
+    consensus_seq = ''
+    consensus_qual = []
+    mismatch_ind = []
+    coverage = []
+    for i, (ch1, ch2, q1, q2) in enumerate(zip(align_str[0], align_str[2], f_qual, r_qual)):
+        if ch1==ch2:
+            s = ch1
+            q = q1 + q2
+            c = 2
+        else:
+            if q1>=q2:
+                s = ch1
+                q = q1
+                #if q2!=0: mismatch_ind.append(i)
+            else:
+                s = ch2
+                q = q2
+                #if q1!=0: mismatch_ind.append(i)
+            c = 0 if s == '-' else 1
+            mismatch_ind.append(i)
+        consensus_seq += s
+        consensus_qual.append(q)
+        coverage.append(c)
+    
+    mismatch_ind = np.array(mismatch_ind)
+    temp = align_str[1].strip('-')
+    if len(temp)>0:
+        mismatch_ind = mismatch_ind[mismatch_ind>=align_str[1].find(temp[0])]
+        mismatch_ind = mismatch_ind[mismatch_ind<=align_str[1].rfind(temp[-1])]
+    else:
+        mismatch_ind = np.array([])
+        
+    # Make the consensus sequence into a Bio.SeqRecord object
+    consensus_seq = SeqRecord(consensus_seq)
+    consensus_seq.letter_annotations['phred_quality'] = consensus_qual
+    consensus_seq.letter_annotations['coverage'] = coverage
+    
+    # Save results as properties of the alignment 
+    align1.consensus_seq = consensus_seq
+    align1.mismatch_ind = mismatch_ind
+    align1.f_ind = f_ind
+    align1.r_ind = r_ind
+    align1.record1 = record1
+    align1.record2 = record2
+    align1.align_str = align_str
+    
+    return align1
+
 
 def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
     """
