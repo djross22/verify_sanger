@@ -18,6 +18,7 @@ from Bio.SeqRecord import SeqRecord
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 from matplotlib.ticker import MultipleLocator
+import matplotlib.patches as patches
 
 import seaborn as sns
 sns.set()
@@ -307,6 +308,125 @@ def align_sanger(record1, record2, verbose=True):
     align1.align_str = align_str
     
     return align1
+
+
+def make_blocks(block, breaks):
+    if len(breaks)>0:
+        temp = []
+        next_x = 0
+        for x in breaks:
+            y = block[next_x: x]
+            temp.append([y[0], y[-1]])
+            next_x = x + 1
+        y = block[next_x: ]
+        temp.append([y[0], y[-1]])
+    else:
+        temp = [ [block[0], block[-1]] ]
+    return temp
+
+
+def zoom_out_plot(align1):
+    f_block = align1.f_ind
+    f_block = f_block[f_block!='none']
+    f_breaks = np.where(f_block=='gap')[0]
+    r_block = align1.r_ind
+    r_block = r_block[r_block!='none']
+    r_breaks = np.where(r_block=='gap')[0]
+    f_block = make_blocks(f_block, f_breaks)
+    r_block = make_blocks(r_block, r_breaks)
+    f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
+    r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
+    
+    plt.rcParams["figure.figsize"] = [12, 4]
+    fig, axs = plt.subplots(3, 1)
+    axs[0].get_shared_x_axes().join(*axs)
+    #axs[0].get_shared_y_axes().join(*axs)
+    ax2 = [ ax.twinx()  for ax in axs ]
+    
+    f_seq = align1.record1
+    r_seq = align1.record2
+    consensus_seq = align1.consensus_seq
+    
+    plot_sanger(consensus_seq, 1, len(consensus_seq), axs[0], ax2=ax2[0], offset=0,
+                include_chromatograms=False, include_coverage=True, letters_on_bottom=False)
+    
+    for b, x in zip(f_block, f_offset):
+        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x, 
+                    include_chromatograms=False, letters_on_bottom=False)
+    
+    for b, x in zip(r_block, r_offset):
+        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x, 
+                    include_chromatograms=False, letters_on_bottom=False)
+    
+    axs[0].tick_params(labelbottom=False)
+    axs[1].tick_params(labelbottom=False)
+    axs[1].tick_params(labeltop=False)
+    axs[2].tick_params(labeltop=False)
+    
+    for ax, title in zip(axs, ['Consensus:', 'Sequence 1:', 'Sequence 2:']):
+        ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
+                size=20, transform=ax.transAxes)
+    
+    shift = -0.02
+    for i, ax in enumerate(axs):
+        box = ax.get_position()
+        box.y0 = box.y0 - shift*i
+        box.y1 = box.y1 - shift*i
+        ax.set_position(box)
+        
+
+def zoom_in_plot(align1, zoom_ind, zoom_span=10):
+    
+    f_block = align1.f_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
+    f_block = f_block[f_block!='none']
+    f_breaks = np.where(f_block=='gap')[0]
+    r_block = align1.r_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
+    r_block = r_block[r_block!='none']
+    r_breaks = np.where(r_block=='gap')[0]
+    f_block = make_blocks(f_block, f_breaks)
+    r_block = make_blocks(r_block, r_breaks)
+    f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
+    r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
+    print(align1.align_str[0][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+    print(align1.align_str[1][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+    print(align1.align_str[2][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+    
+    plt.rcParams["figure.figsize"] = [12, 5]
+    fig, axs = plt.subplots(3, 1)
+    axs[0].get_shared_x_axes().join(*axs)
+    axs[0].get_shared_y_axes().join(*axs)
+    ax2 = [ ax.twinx()  for ax in axs ]
+    
+    f_seq = align1.record1
+    r_seq = align1.record2
+    consensus_seq = align1.consensus_seq
+    
+    plot_sanger(consensus_seq, zoom_ind-zoom_span+1, zoom_ind+zoom_span+1, axs[0], ax2=ax2[0], offset=0,
+                include_chromatograms=False, include_coverage=True)
+    
+    for b, x in zip(f_block, f_offset):
+        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x, letters_on_top=True)
+    
+    for b, x in zip(r_block, r_offset):
+        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x, letters_on_top=True)
+    
+    for ax, title in zip(axs, ['Consensus:', 'Sequence 1:', 'Sequence 2:']):
+        ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
+                size=20, transform=ax.transAxes)
+        
+    shift = 0.06
+    for i, ax in enumerate(axs):
+        box = ax.get_position()
+        box.y0 = box.y0 - shift*i
+        box.y1 = box.y1 - shift*i
+        ax.set_position(box)
+        ylim = ax.get_ylim()
+        ax.set_ylim(ylim)
+        rect = patches.Rectangle((zoom_ind+0.5, ylim[0]), 1, ylim[1]-ylim[0], 
+                                 linewidth=1, edgecolor='k', facecolor='r', alpha=0.2, zorder=-100)
+        ax.add_patch(rect)
+    
+    
 
 
 def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
