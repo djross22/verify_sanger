@@ -467,8 +467,10 @@ def plot_sanger(sequence, start_base, end_base, ax,
     base_positions = [i for i in range(start_base, end_base+1)]
     base_calls = dna_seq[start_base-1:end_base]
     ax.set_yticks([])
+    
     if (end_base - start_base) < 200:
-        ax.xaxis.set_minor_locator(MultipleLocator(1))
+        if letters_on_bottom or letters_on_top:
+            ax.xaxis.set_minor_locator(MultipleLocator(1))
         linewidth = None
     else:
         linewidth = 0.5
