@@ -130,7 +130,7 @@ def num_matches(align1):
     
     return match_count, mismatch_count
     
-def align_sanger(record1, record2, trim=None, verbose=True):
+def align_sanger(record1, record2, verbose=True):
     """
     This method performs a pairwise alignment of two very similar reads.
     
@@ -142,11 +142,6 @@ def align_sanger(record1, record2, trim=None, verbose=True):
     record1, record2 : Biopython sequence objects to be aligned
         record1 and record2 must have with phred_quality annotation for trimming
         e.g. created from raw Sanger data via 'record1 = SeqIO.read(x, "abi")'
-        
-    trim : float
-        A value between 0 and 1 indicating the error probability thershhold
-        used for the sequence trimming. If trim == None, the input sequences
-        are not trimmed
     
     verbose : Boolean
         If true, method prints info about the resulting alignments
@@ -170,16 +165,7 @@ def align_sanger(record1, record2, trim=None, verbose=True):
     aligner.query_internal_open_gap_score = -12
     aligner.query_internal_extend_gap_score = -3
     
-    if trim is not None:
-        trim_ind1 = mott_trimming_fr(record1, trim=trim)
-        trim_ind2 = mott_trimming_fr(record2, trim=trim)
-        new_record1 = record1[trim_ind1[0]:trim_ind1[1]+1]
-        new_record2 = record2[trim_ind2[0]:trim_ind2[1]+1]
-    else:
-        new_record1 = record1
-        new_record2 = record2
-    
-    alignments = aligner.align(new_record1.seq, new_record2.seq)
+    alignments = aligner.align(record1.seq, record2.seq)
     if verbose: print(f'{len(alignments)} alignment(s) found with score: {alignments.score}')
     
     align1 = alignments[0]
