@@ -334,7 +334,8 @@ def make_blocks(block, breaks):
     return temp
 
 
-def zoom_out_plot(align1, title=None):
+def zoom_out_plot(align1, title=None, 
+                  seq1_label='Sequence 1:', seq2_label='Sequence 2:'):
     f_block = align1.f_ind
     f_block = f_block[f_block!='none']
     f_breaks = np.where(f_block=='gap')[0]
@@ -374,7 +375,7 @@ def zoom_out_plot(align1, title=None):
     axs[1].tick_params(labeltop=False)
     axs[2].tick_params(labeltop=False)
     
-    for ax, title in zip(axs, ['Consensus:', 'Sequence 1:', 'Sequence 2:']):
+    for ax, title in zip(axs, ['Consensus:', seq1_label, seq2_label]):
         ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
                 size=20, transform=ax.transAxes)
     
@@ -388,7 +389,8 @@ def zoom_out_plot(align1, title=None):
     return fig, axs
         
 
-def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False):
+def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
+                 seq1_label='Sequence 1:', seq2_label='Sequence 2:'):
     
     f_block = align1.f_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
     f_block = f_block[f_block!='none']
@@ -431,7 +433,7 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False):
     for b, x in zip(r_block, r_offset):
         plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x, letters_on_top=True)
     
-    for ax, title in zip(axs, ['Consensus:', 'Sequence 1:', 'Sequence 2:']):
+    for ax, title in zip(axs, ['Consensus:', seq1_label, seq2_label]):
         ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
                 size=20, transform=ax.transAxes)
         
