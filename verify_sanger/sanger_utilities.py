@@ -327,7 +327,10 @@ def make_blocks(block, breaks):
         else:
             temp.append([block[0], block[-1]])
     else:
-        temp = [ [block[0], block[-1]] ]
+        if len(block)>0:
+            temp = [ [block[0], block[-1]] ]
+        else:
+            temp = None
     return temp
 
 
@@ -391,6 +394,11 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10):
     r_breaks = np.where(r_block=='gap')[0]
     f_block = make_blocks(f_block, f_breaks)
     r_block = make_blocks(r_block, r_breaks)
+    if (r_block is None) or (f_block is None):
+        print('No good sequence blocks to plot')
+        return
+    f_block = [x for x in f_block if 'gap' not in x]
+    r_block = [x for x in r_block if 'gap' not in x]
     f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
     r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
     print(align1.align_str[0][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
@@ -565,6 +573,10 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 is_trimmed=False,
                 include_coverage=False):
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
+    if start_base<1:
+        start_base = 1
+    if end_base>len(sequence):
+        end_base = len(sequence)
     
     if include_chromatograms :
         # chromatogram data
