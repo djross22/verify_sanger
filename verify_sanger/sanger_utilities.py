@@ -316,10 +316,16 @@ def make_blocks(block, breaks):
         next_x = 0
         for x in breaks:
             y = block[next_x: x]
-            temp.append([y[0], y[-1]])
+            if len(y)>0:
+                temp.append([y[0], y[-1]])
+            else:
+                temp.append([block[0], block[-1]])
             next_x = x + 1
         y = block[next_x: ]
-        temp.append([y[0], y[-1]])
+        if len(y)>0:
+            temp.append([y[0], y[-1]])
+        else:
+            temp.append([block[0], block[-1]])
     else:
         temp = [ [block[0], block[-1]] ]
     return temp
