@@ -433,14 +433,14 @@ def sanger_reverse_complement(sequence):
 def plot_sanger(sequence, start_base, end_base, ax, 
                 ax2=None, 
                 offset=0, 
-                quality_only=False, 
+                include_chromatograms=True, 
                 letters_on_bottom=True,
                 letters_on_top=False,
                 is_trimmed=False,
                 include_coverage=False):
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
     
-    if not quality_only:
+    if include_chromatograms :
         # chromatogram data
         raw_data = sequence.annotations["abif_raw"]
         channel_data = [raw_data[x] for x in sanger_channels]
@@ -523,7 +523,7 @@ def plot_sanger(sequence, start_base, end_base, ax,
             ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
     
-    if not quality_only:
+    if include_chromatograms :
         for center, base in zip(base_positions, base_calls):
             left = peak_left[center-1]
             right = peak_right[center-1]
