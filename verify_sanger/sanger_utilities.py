@@ -385,6 +385,8 @@ def zoom_out_plot(align1, title=None):
         box.y1 = box.y1 - shift*i
         ax.set_position(box)
         
+    return fig, axs
+        
 
 def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False):
     
@@ -445,7 +447,7 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False):
                                  linewidth=1, edgecolor='k', facecolor='r', alpha=0.2, zorder=-100)
         ax.add_patch(rect)
     
-    
+    return fig, axs
 
 
 def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
