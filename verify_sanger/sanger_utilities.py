@@ -179,23 +179,23 @@ def align_sanger(record1, record2, verbose=True):
         target_str = align_str[0]
         target_str = target_str.strip('-')
         if '--' in target_str:
-            if verbose: print('multi-base gap in forward sequence')
+            if verbose: print('multi-base gap in sequence no. 1')
             #x = target_str.find('--')
             #print(f'{x}, {target_str}')
         elif '-' in target_str:
             count = target_str.count('-')
-            if verbose: print(f'{count} gap(s) in forward sequence')
+            if verbose: print(f'{count} gap(s) in sequence no. 1')
             #x = target_str.find('-')
             #print(f'{x}, {target_str}')
             
         query_str = align_str[2]
         query_str = query_str.strip('-')
         if '--' in query_str:
-            if verbose: print('multi-base gap in reverse sequence')
+            if verbose: print('multi-base gap in sequence no. 2')
             #print(f'{query_str}')
         elif '-' in query_str:
             count = query_str.count('-')
-            if verbose: print(f'{count} gap(s) in reverse sequence')
+            if verbose: print(f'{count} gap(s) in sequence no. 2')
             #print(f'{query_str}')
     else:
         if verbose: print('no gaps')
