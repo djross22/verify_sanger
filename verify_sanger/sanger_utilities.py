@@ -10,7 +10,8 @@ import glob
 import pandas as pd
 import numpy as np
 
-from Bio import Align 
+from Bio import Align
+from Bio.Seq import Seq
 from Bio import SeqIO
 from Bio import AlignIO
 from Bio.SeqRecord import SeqRecord
@@ -294,7 +295,7 @@ def align_sanger(record1, record2, verbose=True):
         mismatch_ind = np.array([])
         
     # Make the consensus sequence into a Bio.SeqRecord object
-    consensus_seq = SeqRecord(consensus_seq)
+    consensus_seq = SeqRecord(Seq(consensus_seq))
     consensus_seq.letter_annotations['phred_quality'] = consensus_qual
     consensus_seq.letter_annotations['coverage'] = coverage
     
