@@ -478,14 +478,14 @@ def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
     return (x >= min_matches) and (y/x <= max_mismatch_ratio)
 
 
-def slice_sanger(sequence, b0=0, b1=None):
+def slice_sanger(record1, b0=0, b1=None):
     """
     This method slices Sanger data, including the chromatorgram data
     and peak locations for plotting
 
     Parameters
     ----------
-    sequence : Biopython sequence object
+    record1 : Biopython sequence record object
         The sequence to be sliced.
     b0 : int, optional
         The first index for the slice. The default is 0.
@@ -494,27 +494,27 @@ def slice_sanger(sequence, b0=0, b1=None):
 
     Returns
     -------
-    new_seq : Biopython sequence object
+    new_record : Biopython sequence record object
         The sliced sequence.
 
     """
     # If b0 and/or b1 are None, still trim chromatorgram data
     if b1 == None:
-        b1 = len(sequence)
+        b1 = len(record1)
         
     # This method doesn't support negative number indices, 
-    #     or b0, b1>=len(sequence)
-    if (b0<0) or (b1>=len(sequence)):
-        raise ValueError(f'b0 = {b0} but it must be between 0 and the seqeunce length - 1 ({len(sequence)-1})')
-    if (b1<0) or (b1>=len(sequence)):
-        raise ValueError(f'b1 = {b1} but it must be between 0 and the seqeunce length - 1 ({len(sequence)-1})')
+    #     or b0, b1>=len(record1)
+    if (b0<0) or (b1>=len(record1)):
+        raise ValueError(f'b0 = {b0} but it must be between 0 and the seqeunce length - 1 ({len(record1)-1})')
+    if (b1<0) or (b1>=len(record1)):
+        raise ValueError(f'b1 = {b1} but it must be between 0 and the seqeunce length - 1 ({len(record1)-1})')
     
     # Built-in slicing handles sequenc and quality information
-    new_seq = sequence[b0: b1]
-    new_seq.annotations["abif_raw"] = {}
+    new_record = record1[b0: b1]
+    new_record.annotations["abif_raw"] = {}
     
     # chromatogram data and peak locations needs to be added on
-    raw_data = sequence.annotations["abif_raw"]
+    raw_data = record1.annotations["abif_raw"]
     peak_locations = np.array(raw_data['PLOC1'])
     
     # left and right edges of each chromatogram peak
@@ -530,47 +530,47 @@ def slice_sanger(sequence, b0=0, b1=None):
     chrom_end = peak_right[b1-1]
     
     peak_locations = tuple(peak_locations[b0: b1] - chrom_start)
-    new_seq.annotations["abif_raw"]['PLOC1'] = peak_locations
+    new_record.annotations["abif_raw"]['PLOC1'] = peak_locations
     
     for ch in sanger_channels:
-        new_seq.annotations["abif_raw"][ch] = raw_data[ch][chrom_start: chrom_end+1]
+        new_record.annotations["abif_raw"][ch] = raw_data[ch][chrom_start: chrom_end+1]
         
-    return new_seq
+    return new_record
 
 
-def sanger_reverse_complement(sequence):
+def sanger_reverse_complement(record1):
     """
     This method returns the reverse-complement of Sanger data, 
     including the chromatorgram data and peak locations for plotting
 
     Parameters
     ----------
-    sequence : Biopython sequence object
+    record1 : Biopython sequence record object
         The sequence to be reverse-complemented.
 
     Returns
     -------
-    new_seq : Biopython sequence object
+    new_record : Biopython sequence record object
         The reverse-complement sequence.
 
     """
     
     # Built-in slicing handles sequence and quality information
-    new_seq = sequence.reverse_complement()
-    new_seq.annotations["abif_raw"] = {}
+    new_record = record1.reverse_complement()
+    new_record.annotations["abif_raw"] = {}
     
     # chromatogram data and peak locations needs to be added on
-    raw_data = sequence.annotations["abif_raw"]
+    raw_data = record1.annotations["abif_raw"]
     
     for ch, new_ch in zip(sanger_channels, sanger_channels[::-1]):
-        new_seq.annotations["abif_raw"][new_ch] = raw_data[ch][: : -1]
+        new_record.annotations["abif_raw"][new_ch] = raw_data[ch][: : -1]
     
     peak_locations = np.array(raw_data['PLOC1'])
     
     peak_locations = tuple(len(raw_data[ch]) - 1 - peak_locations[: : -1])
-    new_seq.annotations["abif_raw"]['PLOC1'] = peak_locations
+    new_record.annotations["abif_raw"]['PLOC1'] = peak_locations
         
-    return new_seq
+    return new_record
 
 
 def plot_sanger(sequence, start_base, end_base, ax, 
