@@ -516,6 +516,7 @@ def slice_sanger(record1, b0=0, b1=None):
     # chromatogram data and peak locations needs to be added on
     raw_data = record1.annotations["abif_raw"]
     peak_locations = np.array(raw_data['PLOC1'])
+    #TODO: transfer other properties/attributes
     
     # left and right edges of each chromatogram peak
     peak_left = peak_locations
@@ -561,6 +562,7 @@ def sanger_reverse_complement(record1):
     
     # chromatogram data and peak locations needs to be added on
     raw_data = record1.annotations["abif_raw"]
+    #TODO: transfer other properties/attributes
     
     for ch, new_ch in zip(sanger_channels, sanger_channels[::-1]):
         new_record.annotations["abif_raw"][new_ch] = raw_data[ch][: : -1]
