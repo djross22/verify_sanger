@@ -399,7 +399,8 @@ def zoom_out_plot(align1, title=None,
         
 
 def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
-                 seq1_label='Sequence 1:', seq2_label='Sequence 2:'):
+                 seq1_label='Sequence 1:', seq2_label='Sequence 2:',
+                 include_chromatograms=True, compare_to_ref=False):
     
     f_block = align1.f_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
     f_block = f_block[f_block!='none']
@@ -437,10 +438,13 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
                 include_chromatograms=False, include_coverage=True)
     
     for b, x in zip(f_block, f_offset):
-        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x, letters_on_top=True)
+        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x,
+                    letters_on_top=True, include_chromatograms=include_chromatograms,
+                    include_quality=(not compare_to_ref))
     
     for b, x in zip(r_block, r_offset):
-        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x, letters_on_top=True)
+        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x,
+                    letters_on_top=True, include_chromatograms=include_chromatograms)
     
     for ax, title in zip(axs, ['Consensus:', seq1_label, seq2_label]):
         ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
@@ -591,7 +595,8 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 letters_on_bottom=True,
                 letters_on_top=False,
                 is_trimmed=False,
-                include_coverage=False):
+                include_coverage=False,
+                include_quality=True):
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
     if start_base<1:
         start_base = 1
@@ -618,13 +623,12 @@ def plot_sanger(sequence, start_base, end_base, ax,
     # Called sequence
     dna_seq = str(sequence.seq)
     
-    # Quality scores
-    qual = sequence.letter_annotations['phred_quality']
-    
-    # Plot the quality score behind everything else 
+    # Plot the quality score and coverage behind everything else 
     base_positions = [i for i in range(start_base, end_base+1)]
     base_calls = dna_seq[start_base-1:end_base]
     ax.set_yticks([])
+    qual_x = np.array( [ np.array([x - 0.5]*2) for x in base_positions ] ).flatten()
+    qual_x = np.append(qual_x, [base_positions[-1]+0.5]*2)
     
     if (end_base - start_base) < 200:
         if letters_on_bottom or letters_on_top:
@@ -632,21 +636,23 @@ def plot_sanger(sequence, start_base, end_base, ax,
         linewidth = None
     else:
         linewidth = 0.5
-    qual_x = np.array( [ np.array([x - 0.5]*2) for x in base_positions ] ).flatten()
-    qual_x = np.append(qual_x, [base_positions[-1]+0.5]*2)
-    qual_y = np.array( [ np.array([x]*2) for x in qual[start_base-1:end_base] ] ).flatten()
-    qual_y = np.append(qual_y, 0)
-    qual_y = np.insert(qual_y, 0, 0)
-    if is_trimmed:
-        color = sns.color_palette()[3]
-        f_alpha = 0.05
-        l_alpha = .3
-    else:
-        color = sns.color_palette()[2]
-        f_alpha = 0.1
-        l_alpha = 1
-    ax.fill_between(qual_x+offset, qual_y, color=color, alpha=f_alpha, zorder=-20)
-    ax.plot(qual_x[1:-1]+offset, qual_y[1:-1], color=color, alpha=l_alpha, zorder=-19, linewidth=linewidth)
+        
+    # Quality scores
+    if include_quality:
+        qual = sequence.letter_annotations['phred_quality']
+        qual_y = np.array( [ np.array([x]*2) for x in qual[start_base-1:end_base] ] ).flatten()
+        qual_y = np.append(qual_y, 0)
+        qual_y = np.insert(qual_y, 0, 0)
+        if is_trimmed:
+            color = sns.color_palette()[3]
+            f_alpha = 0.05
+            l_alpha = .3
+        else:
+            color = sns.color_palette()[2]
+            f_alpha = 0.1
+            l_alpha = 1
+        ax.fill_between(qual_x+offset, qual_y, color=color, alpha=f_alpha, zorder=-20)
+        ax.plot(qual_x[1:-1]+offset, qual_y[1:-1], color=color, alpha=l_alpha, zorder=-19, linewidth=linewidth)
     if include_coverage:
         cover = sequence.letter_annotations['coverage']
         y = np.array( [ np.array([x]*2) for x in cover[start_base-1:end_base] ] ).flatten()
