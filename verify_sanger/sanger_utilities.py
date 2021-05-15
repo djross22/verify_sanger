@@ -133,7 +133,7 @@ def num_matches(align1):
     
     return match_count, mismatch_count
     
-def align_sanger(record1, record2, verbose=True):
+def align_sanger(record1, record2, verbose=True, default_quality1=30):
     """
     This method performs a pairwise alignment of two very similar reads.
     
@@ -148,6 +148,11 @@ def align_sanger(record1, record2, verbose=True):
     
     verbose : Boolean
         If true, method prints info about the resulting alignments
+    
+    default_quality1 : float
+        The quality score assumed for record1 if it does not have a 
+        'phred_quality' entry in the letter_annotations dictionary, 
+        e.g., if record1 iS a reference sequence
 
     Returns
     -------
@@ -210,7 +215,10 @@ def align_sanger(record1, record2, verbose=True):
     f_qual = []
     f_ind = []
     i = 0
-    input_qual = record1.letter_annotations['phred_quality']
+    if 'phred_quality' in record1.letter_annotations.keys():
+        input_qual = record1.letter_annotations['phred_quality']
+    else:
+        input_qual = [default_quality1]*len(record1)
     start_gap = True
     for ch in align_str[0]:
         if ch == '-':
