@@ -257,7 +257,7 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     if find_consensus:
         input_qual = record2.letter_annotations['phred_quality']
     else:
-        input_qual = [0]*len(record1)
+        input_qual = [0]*len(record2)
     start_gap = True
     for ch in align_str[2]:
         if ch == '-':
