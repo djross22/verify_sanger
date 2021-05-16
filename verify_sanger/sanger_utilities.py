@@ -667,7 +667,6 @@ def plot_sanger(sequence, start_base, end_base, ax,
     ylim = ax.get_ylim()
     ax.set_ylim(0, ylim[1])
     
-    ax2.set_yticks([])
     trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
     if is_trimmed:
         alpha = 0.5
@@ -687,7 +686,8 @@ def plot_sanger(sequence, start_base, end_base, ax,
             ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
     
-    if include_chromatograms :
+    if include_chromatograms:
+        ax2.set_yticks([])
         for center, base in zip(base_positions, base_calls):
             left = peak_left[center-1]
             right = peak_right[center-1]
