@@ -134,7 +134,7 @@ def num_matches(align1):
     return match_count, mismatch_count
     
 def align_sanger(record1, record2, verbose=True, find_consensus=True, 
-                 default_quality1=0):
+                 default_quality1=0, include_stop=False):
     """
     This method performs a pairwise alignment of two very similar reads.
     
@@ -176,6 +176,8 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     aligner.target_internal_extend_gap_score = -3
     aligner.query_internal_open_gap_score = -12
     aligner.query_internal_extend_gap_score = -3
+    if include_stop:
+        aligner.alphabet += '*'
     
     alignments = aligner.align(record1.seq, record2.seq)
     if verbose: print(f'{len(alignments)} alignment(s) found with score: {alignments.score}')
