@@ -133,7 +133,8 @@ def num_matches(align1):
     
     return match_count, mismatch_count
     
-def align_sanger(record1, record2, verbose=True, default_quality1=0):
+def align_sanger(record1, record2, verbose=True, find_consensus=True, 
+                 default_quality1=0):
     """
     This method performs a pairwise alignment of two very similar reads.
     
@@ -148,6 +149,9 @@ def align_sanger(record1, record2, verbose=True, default_quality1=0):
     
     verbose : Boolean
         If true, method prints info about the resulting alignments
+    
+    find_consensus : Boolean
+        If true, method uses quality scores to detirmine a consensus sequence
     
     default_quality1 : float
         The quality score assumed for record1 if it does not have a 
@@ -215,10 +219,13 @@ def align_sanger(record1, record2, verbose=True, default_quality1=0):
     f_qual = []
     f_ind = []
     i = 0
-    if 'phred_quality' in record1.letter_annotations.keys():
-        input_qual = record1.letter_annotations['phred_quality']
+    if find_consensus:
+        if 'phred_quality' in record1.letter_annotations.keys():
+            input_qual = record1.letter_annotations['phred_quality']
+        else:
+            input_qual = [default_quality1]*len(record1)
     else:
-        input_qual = [default_quality1]*len(record1)
+        input_qual = [0]*len(record1)
     start_gap = True
     for ch in align_str[0]:
         if ch == '-':
@@ -245,7 +252,10 @@ def align_sanger(record1, record2, verbose=True, default_quality1=0):
     r_qual = []
     r_ind = []
     i = 0
-    input_qual = record2.letter_annotations['phred_quality']
+    if find_consensus:
+        input_qual = record2.letter_annotations['phred_quality']
+    else:
+        input_qual = [0]*len(record1)
     start_gap = True
     for ch in align_str[2]:
         if ch == '-':
@@ -270,6 +280,9 @@ def align_sanger(record1, record2, verbose=True, default_quality1=0):
     
     # Find consensus (using quality scores), coverage, 
     #     and the indices for any mismatches
+    # The mismatch_ind list is a list of mismatches and gaps between the 
+    #     two input sequences. It is useful to have even when the consensus
+    #     sequence is not.
     consensus_seq = ''
     consensus_qual = []
     mismatch_ind = []
@@ -302,13 +315,15 @@ def align_sanger(record1, record2, verbose=True, default_quality1=0):
     else:
         mismatch_ind = np.array([])
         
-    # Make the consensus sequence into a Bio.SeqRecord object
-    consensus_seq = SeqRecord(Seq(consensus_seq))
-    consensus_seq.letter_annotations['phred_quality'] = consensus_qual
-    consensus_seq.letter_annotations['coverage'] = coverage
+    if find_consensus:
+        # Make the consensus sequence into a Bio.SeqRecord object
+        consensus_seq = SeqRecord(Seq(consensus_seq))
+        consensus_seq.letter_annotations['phred_quality'] = consensus_qual
+        consensus_seq.letter_annotations['coverage'] = coverage
     
     # Save results as properties of the alignment 
-    align1.consensus_seq = consensus_seq
+    if find_consensus:
+        align1.consensus_seq = consensus_seq
     align1.mismatch_ind = mismatch_ind
     align1.f_ind = f_ind
     align1.r_ind = r_ind
