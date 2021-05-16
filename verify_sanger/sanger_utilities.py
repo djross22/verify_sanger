@@ -133,7 +133,7 @@ def num_matches(align1):
     
     return match_count, mismatch_count
     
-def align_sanger(record1, record2, verbose=True, default_quality1=30):
+def align_sanger(record1, record2, verbose=True, default_quality1=0):
     """
     This method performs a pairwise alignment of two very similar reads.
     
