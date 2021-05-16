@@ -785,4 +785,8 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 ax2.plot(x, y, color=c, alpha=alpha);
     
     
-    
+def translate_with_gaps(record1):
+    seq1 = record1.seq.ungap(gap='-')
+    new_record = SeqRecord(seq1)
+    return new_record.translate()
+
