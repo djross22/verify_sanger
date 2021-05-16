@@ -789,8 +789,10 @@ def plot_sanger(sequence, start_base, end_base, ax,
             ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
     
-    if include_chromatograms:
+    if ax2 is not None:
         ax2.set_yticks([])
+        
+    if include_chromatograms:
         for center, base in zip(base_positions, base_calls):
             left = peak_left[center-1]
             right = peak_right[center-1]
