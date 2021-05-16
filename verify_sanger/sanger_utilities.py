@@ -465,6 +465,94 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
     return fig, axs
 
 
+def make_type_color_dict(record1):
+    type_list = np.unique([x.type for x in record1.features])
+    return {t:c for t, c in zip(type_list, sns.color_palette('pastel')) }
+
+
+def plot_features(record1, ax, x_offset=0):
+    for feat in record1.features:
+        p0 = feat.location.start.position + x_offset
+        p1 = feat.location.end.position + x_offset
+        c = make_type_color_dict(record1)[feat.type]
+        rect = patches.Rectangle((p0+0.5, -0.5), p1-p0, 1, 
+                                 linewidth=1, edgecolor='k', facecolor=c, alpha=1, zorder=20)
+        ax.add_patch(rect)
+        if (p1-p0)>=len(record1)/5:
+            label = feat.qualifiers['label'][0]
+            ax.text((p1+p0)/2, -0.1, label, horizontalalignment='center', verticalalignment='center',
+                     size=20, transform=ax.transData, alpha=1, zorder=30)
+        ax.plot([0.5 + x_offset, len(record1)+0.5 + x_offset], [0,0], 'k', zorder=10);
+        ax.set_axis_off()
+
+
+def compare_to_ref_plot(align1, title=None, 
+                        seq1_label='Reference:', seq2_label='Sanger:',
+                        anchor_feature=None):
+    f_block = align1.f_ind
+    f_block = f_block[f_block!='none']
+    f_breaks = np.where(f_block=='gap')[0]
+    r_block = align1.r_ind
+    r_block = r_block[r_block!='none']
+    r_breaks = np.where(r_block=='gap')[0]
+    f_block = make_blocks(f_block, f_breaks)
+    r_block = make_blocks(r_block, r_breaks)
+    f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
+    r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
+    
+    plt.rcParams["figure.figsize"] = [12, 3]
+    fig, axs = plt.subplots(2, 1)
+    if title is not None:
+        fig.suptitle(title, size=20, verticalalignment='bottom')
+    axs[0].get_shared_x_axes().join(*axs)
+    #axs[0].get_shared_y_axes().join(*axs)
+    
+    #f_seq = align1.record1
+    r_seq = align1.record2
+    #consensus_seq = align1.consensus_seq
+        
+    #for b, x in zip(f_block, f_offset):
+    #    vs.plot_sanger(f_seq, b[0]+1, b[1]+1, axs[0], ax2=None, offset=x, 
+    #                include_chromatograms=False, letters_on_bottom=False, include_quality=False)
+    if anchor_feature is not None:
+        anchor_feat = None
+        for feat in align1.record1.features:
+            if feat.qualifiers['label'][0] == anchor_feature:
+                anchor_feat = feat
+                break
+        if anchor_feat is not None:
+            anchor_offset = -np.mean(f_offset) - anchor_feat.location.start.position
+        else:
+            anchor_offset = 0
+    else:
+        anchor_offset = 0
+        
+    plot_features(align1.record1, axs[0], x_offset=np.mean(f_offset)+anchor_offset)
+    
+    for b, x in zip(r_block, r_offset):
+        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[1], ax2=None, offset=x+anchor_offset, 
+                    include_chromatograms=False, letters_on_bottom=False)
+    
+    axs[0].tick_params(labelbottom=False)
+    axs[1].tick_params(labelbottom=True)
+    axs[1].tick_params(labeltop=False)
+    
+    for ax, title in zip(axs, [seq1_label, seq2_label]):
+        ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
+                size=20, transform=ax.transAxes)
+    
+    shift = 0.2
+    box = axs[0].get_position()
+    box.y0 = box.y0 + shift
+    axs[0].set_position(box)
+    box = axs[1].get_position()
+    box.y0 = box.y0 + shift
+    box.y1 = box.y1 + shift
+    axs[1].set_position(box)
+        
+    return fig, axs
+
+
 def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
     """
     This method decides whether or not a pairwise alignment should be counted
