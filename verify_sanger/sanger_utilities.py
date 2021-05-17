@@ -107,6 +107,31 @@ def mott_trimming_fr(record, trim=0.05):
     else:
         return max(f_start1, f_start2), min(f_end1, f_end2)
     
+
+def num_gaps(align1):
+    """
+    This method calculates the number of internal gaps in a pairwise alignment
+
+    Parameters
+    ----------
+    align1 : Bio.Align.PairwiseAlignment
+        The alignment
+
+    Returns
+    -------
+    gap_count : int
+        number of internal gaps.
+
+    """
+    align_str = f'{align1}'
+    align_str = align_str.split('\n')
+    gap_str = align_str[1]
+    gap_str = gap_str.strip('-')
+    gap_count = gap_str.count('-')
+    
+    return gap_count    
+
+    
 def num_matches(align1):
     """
     This method calculates the number of matched bases and the number of
