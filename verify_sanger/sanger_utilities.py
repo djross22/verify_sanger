@@ -108,7 +108,7 @@ def mott_trimming_fr(record, trim=0.05):
         return max(f_start1, f_start2), min(f_end1, f_end2)
     
 
-def num_gaps(align1):
+def num_gaps(align1, gap_seq=None):
     """
     This method calculates the number of internal gaps in a pairwise alignment
 
@@ -116,6 +116,10 @@ def num_gaps(align1):
     ----------
     align1 : Bio.Align.PairwiseAlignment
         The alignment
+        
+    gap_seq : string
+        string which indicates which part of the alignment to use for 
+        counting gaps
 
     Returns
     -------
@@ -125,7 +129,13 @@ def num_gaps(align1):
     """
     align_str = f'{align1}'
     align_str = align_str.split('\n')
-    gap_str = align_str[1]
+    if gap_seq == 'seq1':
+        gap_ind = 0
+    elif gap_seq == 'seq2':
+        gap_ind = 2
+    else:
+        gap_ind = 1
+    gap_str = align_str[gap_ind]
     gap_str = gap_str.strip('-')
     gap_count = gap_str.count('-')
     
