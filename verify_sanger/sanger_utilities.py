@@ -613,7 +613,8 @@ def compare_to_ref_plot(align1, title=None,
     return fig, axs
 
 
-def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
+def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02,
+                   max_gap_ratio=0.015):
     """
     This method decides whether or not a pairwise alignment should be counted
     as a good result for matched forward and reverse Sanger sequences
@@ -626,17 +627,30 @@ def is_good_sanger(alignment, min_matches=20, max_mismatch_ratio=0.02):
     min_matches : int, optional
         The minumum number of matches for a good alignment. The default is 20.
     max_mismatch_ratio : float, optional
-        The maximum value of the ratio (number of matches)/(number of mismatches)
+        The maximum value of the ratio: (number of mismatches)/(number of matches)
         for a good alignment. The default is 0.02.
+    max_gap_ratio : float, optional
+        The maximum value of the ratio: (number of gaps)/(number of matches)
+        for a good alignment. Calculated separately for each sequence in the
+        alignment. The default is 0.015.
 
     Returns
     -------
-    Boolean
+    ret_val : Boolean
         True if the alignement is good.
 
     """
+    
     x, y = num_matches(alignment)
-    return (x >= min_matches) and (y/x <= max_mismatch_ratio)
+    ret_val = x >= min_matches
+    if ret_val:
+        ret_val = ret_val & (y/x <= max_mismatch_ratio)
+        z1 = num_gaps(alignment, gap_seq='seq1')
+        z2 = num_gaps(alignment, gap_seq='seq2')
+        ret_val = ret_val & (z1/x <= max_gap_ratio)
+        ret_val = ret_val & (z2/x <= max_gap_ratio)
+    
+    return ret_val
 
 
 def slice_sanger(record1, b0=0, b1=None):
