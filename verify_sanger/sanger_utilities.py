@@ -499,7 +499,7 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
     for b, x in zip(f_block, f_offset):
         plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x,
                     letters_on_top=True, include_chromatograms=include_chromatograms,
-                    include_quality=(not compare_to_ref))
+                    ref_seq_plot=compare_to_ref)
     
     for b, x in zip(r_block, r_offset):
         plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x,
@@ -520,6 +520,22 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
         rect = patches.Rectangle((zoom_ind+0.5, ylim[0]), 1, ylim[1]-ylim[0], 
                                  linewidth=1, edgecolor='k', facecolor='r', alpha=0.2, zorder=-100)
         ax.add_patch(rect)
+        
+    if compare_to_ref:
+        axs[1].set_axis_off()
+        ax2[1].set_axis_off()
+        shift1 = 0.135
+        shift2 = shift1 - 0.08
+        box = axs[1].get_position()
+        box.y0 = box.y0 + shift1 + shift2
+        box.y1 = box.y1 + shift2
+        axs[1].set_position(box)
+        
+        shift3 = 0.05
+        box = axs[2].get_position()
+        box.y0 = box.y0 + shift1 + shift2 + shift3
+        box.y1 = box.y1 + shift1 + shift2 + shift3
+        axs[2].set_position(box)
     
     return fig, axs
 
@@ -758,7 +774,19 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 letters_on_top=False,
                 is_trimmed=False,
                 include_coverage=False,
-                include_quality=True):
+                include_quality=True,
+                ref_seq_plot=False):
+    
+    if ref_seq_plot:
+        include_quality = False
+        include_coverage = False
+        include_chromatograms = False
+        letters_on_bottom = False
+        letters_on_top = False
+        letters_in_middle = True
+    else:
+        letters_in_middle = False
+        
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
     if start_base<1:
         start_base = 1
@@ -839,6 +867,9 @@ def plot_sanger(sequence, start_base, end_base, ax,
         ax.tick_params(labelbottom=False)
     if letters_on_top:
         ax.tick_params(labeltop=False)
+    if letters_in_middle:
+        ax.tick_params(labeltop=False)
+        ax.tick_params(labelbottom=False)
         
     for center, base in zip(base_positions, base_calls):
         if letters_on_bottom:
@@ -846,6 +877,9 @@ def plot_sanger(sequence, start_base, end_base, ax,
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
         if letters_on_top:
             ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
+                   fontname="Courier New", size=20, transform=trans, alpha=alpha)
+        if letters_in_middle:
+            ax.text(center+offset, 0.5, base, horizontalalignment='center', verticalalignment='center',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
     
     if ax2 is not None:
