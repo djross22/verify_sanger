@@ -461,7 +461,7 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
     r_block = make_blocks(r_block, r_breaks)
     if (r_block is None) or (f_block is None):
         if verbose: print('No good sequence blocks to plot')
-        return
+        return None, None
     f_block = [x for x in f_block if 'gap' not in x]
     r_block = [x for x in r_block if 'gap' not in x]
     f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
