@@ -841,3 +841,120 @@ def translate_with_gaps(record1):
     new_record = SeqRecord(seq1)
     return new_record.translate()
 
+
+def find_mutations_vs_reference(ref_alignment, ref_feature, verbose=True):
+    
+    # Find the feature in the reference SeqRecord from the ref_alignment
+    reference_feat = None
+    for feat in ref_alignment.record1.features:
+        if feat.qualifiers['label'][0] == ref_feature:
+            reference_feat = feat
+            break
+        
+    if reference_feat is None:
+        return None, None
+    
+    # These are the start and end positions of the insert CDS in the reference sequence 
+    ref_b0 = reference_feat.location.start.position
+    ref_b1 = reference_feat.location.end.position
+    
+    # These are the start and end positions of the insert CDS in the alignment/consensus sequence
+    ref_start = np.where(ref_alignment.f_ind==ref_b0)[0][0]
+    ref_end = np.where(ref_alignment.f_ind==ref_b1)[0][0]
+    
+    ref_dna = ref_alignment.record1[ref_b0: ref_b1]
+    test_dna = ref_alignment.consensus_seq[ref_start: ref_end]
+    
+    ref_aminos = ref_dna.translate()
+    test_aminos = translate_with_gaps(test_dna)
+    
+    # The same aligner settings used for Sanger sequence alignments
+    #     also seem to work for amino acid alignments.
+    amino_alignment = align_aminos(ref_aminos, test_aminos, verbose=verbose)
+    
+    substitution_codes, indel_codes = mutation_codes_from_alignment(amino_alignment)
+                    
+    return amino_alignment, substitution_codes, indel_codes
+
+
+def align_aminos(ref_aminos, test_aminos, verbose=True):
+    # The same aligner settings used for Sanger sequence alignments
+    #     also seem to work for amino acid alignments.
+    amino_alignment = align_sanger(ref_aminos, test_aminos, 
+                                   find_consensus=False, include_stop=True,
+                                   verbose=verbose)
+    
+    return amino_alignment
+
+
+def mutation_codes_from_alignment(align1):
+    substitution_codes = []
+    indel_codes = []
+    for ind in align1.mismatch_ind:
+        wt_pos = align1.f_ind[ind]
+        wt_amino = align1.align_str[0][ind]
+        new_amino = align1.align_str[2][ind]
+        if align1.align_str[1][ind] == '.':
+            # Substitution
+            substitution_codes.append(f'{wt_amino}{wt_pos+1}{new_amino}')
+        elif align1.align_str[1][ind] == '-':
+            # Insertion or deletion
+            #TODO: remove duplicate entries in indel_codes for 
+            #     multi-base/multi-residue indels
+            if wt_amino == '-':
+                # Insertion
+                p1 = ind
+                ch = align1.align_str[0][p1]
+                while ch =='-':
+                    p1 -= 1
+                    ch = align1.align_str[0][p1]
+                p2 = ind
+                ch = align1.align_str[0][p2]
+                while ch =='-':
+                    p2 += 1
+                    ch = align1.align_str[0][p2]
+    
+                wt_pos1 = align1.f_ind[p1]
+                wt_pos2 = align1.f_ind[p2]
+                wt_amino1 = f'{align1.record1.seq}'[wt_pos1]
+                wt_amino2 = f'{align1.record1.seq}'[wt_pos2]
+            
+                indel_codes.append(f'{wt_amino1}{wt_pos1+1}_{wt_amino2}{wt_pos2+1}ins{new_amino}')
+            elif new_amino == '-':
+                # Deletion
+                p1 = ind
+                ch = align1.align_str[2][p1]
+                while ch =='-':
+                    p1 -= 1
+                    ch = align1.align_str[2][p1]
+                p1 += 1
+                p2 = ind
+                ch = align1.align_str[2][p2]
+                while ch =='-':
+                    p2 += 1
+                    ch = align1.align_str[2][p2]
+                p2 -= 1
+    
+                wt_pos1 = align1.f_ind[p1]
+                wt_pos2 = align1.f_ind[p2]
+                wt_amino1 = f'{align1.record1.seq}'[wt_pos1]
+                wt_amino2 = f'{align1.record1.seq}'[wt_pos2]
+                
+                if wt_pos1==wt_pos2:
+                    indel_codes.append(f'{wt_amino1}{wt_pos1+1}del')
+                else:
+                    indel_codes.append(f'{wt_amino1}{wt_pos1+1}_{wt_amino2}{wt_pos2+1}del')
+                    
+    return substitution_codes, indel_codes
+
+
+def mutation_codes_from_name(name):
+    name = name[name.find('(')+1:]
+    name = name[:name.rfind(')')]
+    codes = np.array(name.split('/'))
+    pos = [int(x[1:-1]) for x in codes]
+    df = pd.DataFrame({'codes':codes, 'pos':pos})
+    df.sort_values(by='pos', inplace=True)
+    codes = list(df.codes)
+    return codes
+
