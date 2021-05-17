@@ -589,8 +589,9 @@ def compare_to_ref_plot(align1, title=None,
     plot_features(align1.record1, axs[0], x_offset=np.mean(f_offset)+anchor_offset)
     
     for b, x in zip(r_block, r_offset):
-        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[1], ax2=None, offset=x+anchor_offset, 
-                    include_chromatograms=False, letters_on_bottom=False)
+        if (type(b[0]) is int) and (type(b[1]) is int):
+            plot_sanger(r_seq, b[0]+1, b[1]+1, axs[1], ax2=None, offset=x+anchor_offset, 
+                        include_chromatograms=False, letters_on_bottom=False)
     
     axs[0].tick_params(labelbottom=False)
     axs[1].tick_params(labelbottom=True)
