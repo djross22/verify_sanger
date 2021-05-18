@@ -461,7 +461,8 @@ def zoom_out_plot(align1, title=None,
 
 def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
                  seq1_label='Sequence 1:', seq2_label='Sequence 2:',
-                 include_chromatograms=True, compare_to_ref=False):
+                 include_chromatograms=True, compare_to_ref=False,
+                 anchor_feature=None):
     
     f_block = align1.f_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
     f_block = f_block[f_block!='none']
@@ -497,20 +498,38 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
     r_seq = align1.record2
     consensus_seq = align1.consensus_seq
     
-    plot_sanger(consensus_seq, zoom_ind-zoom_span+1, zoom_ind+zoom_span+1, axs[0], ax2=ax2[0], offset=0,
+    if anchor_feature is not None:
+        anchor_offset = 0
+        
+        anchor_feat = None
+        for feat in align1.record1.features:
+            if feat.qualifiers['label'][0] == anchor_feature:
+                anchor_feat = feat
+                break
+        if anchor_feat is not None:
+            anchor_offset = -anchor_feat.location.start.position
+            anchor_offset -= np.where(align1.f_ind==0)[0][0]
+        else:
+            anchor_offset = 0
+    else:
+        anchor_offset = 0
+    
+    plot_sanger(consensus_seq, zoom_ind-zoom_span+1, zoom_ind+zoom_span+1, 
+                axs[0], ax2=ax2[0], offset=anchor_offset,
                 include_chromatograms=False, include_coverage=True)
     
     for b, x in zip(f_block, f_offset):
-        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x,
+        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x+anchor_offset,
                     letters_on_top=True, include_chromatograms=include_chromatograms,
                     ref_seq_plot=compare_to_ref)
     
     for b, x in zip(r_block, r_offset):
-        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x,
+        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x+anchor_offset,
                     letters_on_top=True, include_chromatograms=include_chromatograms)
     
     for ax, s_label in zip(axs, ['Consensus:', seq1_label, seq2_label]):
-        ax.text(-0.01, 0.5, s_label, horizontalalignment='right', verticalalignment='center',
+        ax.text(-0.01, 0.5, s_label, horizontalalignment='right', 
+                verticalalignment='center',
                 size=20, transform=ax.transAxes)
         
     shift = 0.06
@@ -521,7 +540,7 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
         ax.set_position(box)
         ylim = ax.get_ylim()
         ax.set_ylim(ylim)
-        rect = patches.Rectangle((zoom_ind+0.5, ylim[0]), 1, ylim[1]-ylim[0], 
+        rect = patches.Rectangle((zoom_ind+0.5+anchor_offset, ylim[0]), 1, ylim[1]-ylim[0], 
                                  linewidth=1, edgecolor='k', facecolor='r', alpha=0.2, zorder=-100)
         ax.add_patch(rect)
         
