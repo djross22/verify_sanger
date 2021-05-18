@@ -418,7 +418,7 @@ def zoom_out_plot(align1, title=None,
     plt.rcParams["figure.figsize"] = [12, 4]
     fig, axs = plt.subplots(3, 1)
     if title is not None:
-        fig.suptitle(title, size=20, 
+        fig.suptitle(title, size=20, x=0.1,
                      verticalalignment='bottom',
                      horizontalalignment='left')
     axs[0].get_shared_x_axes().join(*axs)
@@ -486,7 +486,7 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
     plt.rcParams["figure.figsize"] = [12, 5]
     fig, axs = plt.subplots(3, 1)
     if title is not None:
-        fig.suptitle(title, size=20, 
+        fig.suptitle(title, size=20, x=0.1,
                      verticalalignment='bottom',
                      horizontalalignment='left')
     axs[0].get_shared_x_axes().join(*axs)
@@ -582,7 +582,7 @@ def compare_to_ref_plot(align1, title=None,
     plt.rcParams["figure.figsize"] = [12, 3]
     fig, axs = plt.subplots(2, 1)
     if title is not None:
-        fig.suptitle(title, size=20, 
+        fig.suptitle(title, size=20, x=0.1,
                      verticalalignment='bottom',
                      horizontalalignment='left')
     axs[0].get_shared_x_axes().join(*axs)
