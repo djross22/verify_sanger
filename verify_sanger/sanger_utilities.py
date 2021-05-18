@@ -614,6 +614,19 @@ def compare_to_ref_plot(align1, title=None,
         if (type(b[0]) is int) and (type(b[1]) is int):
             plot_sanger(r_seq, b[0]+1, b[1]+1, axs[1], ax2=None, offset=x+anchor_offset, 
                         include_chromatograms=False, letters_on_bottom=False)
+            
+    # Add red rectangles above Sanger quality plot to show locations of 
+    #     mismatches and gaps
+    ylim = axs[1].get_ylim()
+    rect_h = (ylim[1] - ylim[0])*0.15
+    rect_y0 = ylim[1]
+    for ind in align1.mismatch_ind:
+        rect_x0 = ind + 0.5 + np.mean(f_offset) + anchor_offset
+        rect = patches.Rectangle((rect_x0, rect_y0), 1, rect_h, 
+                                 linewidth=2, edgecolor='r', facecolor='r', 
+                                 alpha=1, zorder=100)
+        axs[1].add_patch(rect)
+    axs[1].set_ylim(ylim[0], ylim[1]+rect_h*2)
     
     axs[0].tick_params(labelbottom=False)
     axs[1].tick_params(labelbottom=True)
