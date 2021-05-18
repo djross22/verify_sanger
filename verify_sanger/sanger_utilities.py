@@ -219,9 +219,9 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         aligner.alphabet += '*'
     
     if ungap:
-        alignments = aligner.align(record1.seq.ungap('-'), record2.seq.ungap('-'))
-    else:
-        alignments = aligner.align(record1.seq, record2.seq)
+        record1 = ungap_seqrecord(record1)
+        record2 = ungap_seqrecord(record2)
+    alignments = aligner.align(record1.seq, record2.seq)
     if verbose: print(f'{len(alignments)} alignment(s) found with score: {alignments.score}')
     
     align1 = alignments[0]
@@ -418,7 +418,9 @@ def zoom_out_plot(align1, title=None,
     plt.rcParams["figure.figsize"] = [12, 4]
     fig, axs = plt.subplots(3, 1)
     if title is not None:
-        fig.suptitle(title, size=20, verticalalignment='bottom')
+        fig.suptitle(title, size=20, 
+                     verticalalignment='bottom',
+                     horizontalalignment='left')
     axs[0].get_shared_x_axes().join(*axs)
     #axs[0].get_shared_y_axes().join(*axs)
     ax2 = [ ax.twinx()  for ax in axs ]
@@ -443,8 +445,8 @@ def zoom_out_plot(align1, title=None,
     axs[1].tick_params(labeltop=False)
     axs[2].tick_params(labeltop=False)
     
-    for ax, title in zip(axs, ['Consensus:', seq1_label, seq2_label]):
-        ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
+    for ax, s_label in zip(axs, ['Consensus:', seq1_label, seq2_label]):
+        ax.text(-0.01, 0.5, s_label, horizontalalignment='right', verticalalignment='center',
                 size=20, transform=ax.transAxes)
     
     shift = -0.02
@@ -484,7 +486,9 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
     plt.rcParams["figure.figsize"] = [12, 5]
     fig, axs = plt.subplots(3, 1)
     if title is not None:
-        fig.suptitle(title, size=20, verticalalignment='bottom')
+        fig.suptitle(title, size=20, 
+                     verticalalignment='bottom',
+                     horizontalalignment='left')
     axs[0].get_shared_x_axes().join(*axs)
     axs[0].get_shared_y_axes().join(*axs)
     ax2 = [ ax.twinx()  for ax in axs ]
@@ -505,8 +509,8 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
         plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x,
                     letters_on_top=True, include_chromatograms=include_chromatograms)
     
-    for ax, title in zip(axs, ['Consensus:', seq1_label, seq2_label]):
-        ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
+    for ax, s_label in zip(axs, ['Consensus:', seq1_label, seq2_label]):
+        ax.text(-0.01, 0.5, s_label, horizontalalignment='right', verticalalignment='center',
                 size=20, transform=ax.transAxes)
         
     shift = 0.06
@@ -578,7 +582,9 @@ def compare_to_ref_plot(align1, title=None,
     plt.rcParams["figure.figsize"] = [12, 3]
     fig, axs = plt.subplots(2, 1)
     if title is not None:
-        fig.suptitle(title, size=20, verticalalignment='bottom')
+        fig.suptitle(title, size=20, 
+                     verticalalignment='bottom',
+                     horizontalalignment='left')
     axs[0].get_shared_x_axes().join(*axs)
     #axs[0].get_shared_y_axes().join(*axs)
     
@@ -613,8 +619,8 @@ def compare_to_ref_plot(align1, title=None,
     axs[1].tick_params(labelbottom=True)
     axs[1].tick_params(labeltop=False)
     
-    for ax, title in zip(axs, [seq1_label, seq2_label]):
-        ax.text(-0.01, 0.5, title, horizontalalignment='right', verticalalignment='center',
+    for ax, s_label in zip(axs, [seq1_label, seq2_label]):
+        ax.text(-0.01, 0.5, s_label, horizontalalignment='right', verticalalignment='center',
                 size=20, transform=ax.transAxes)
     
     shift = 0.2
@@ -764,6 +770,23 @@ def sanger_reverse_complement(record1):
     new_record.annotations["abif_raw"]['PLOC1'] = peak_locations
         
     return new_record
+
+
+def ungap_seqrecord(record1):
+    base_array = np.array([x for x in f'{record1.seq}'])
+    remove_list = np.where(base_array=='-')[0]
+    
+    new_anotations = {}
+    for key in record1.letter_annotations.keys():
+        new_val = np.delete(record1.letter_annotations[key], remove_list)
+        new_anotations[key] = new_val
+    
+    record1.letter_annotations = {}
+    
+    record1.seq = record1.seq.ungap('-')
+    record1.letter_annotations = new_anotations
+    
+    return record1
 
 
 def plot_sanger(sequence, start_base, end_base, ax, 
