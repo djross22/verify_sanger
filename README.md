@@ -1,5 +1,7 @@
 Python package for automated analysis of Sanger sequencing data to verify construct insters into plasmids.
 
+Written for Python 3.
+
 Only uses the built-in BioPython pairwise sequence aligner so that it is usable across platforms without having to install additional alignment tools.
 
 Still a work in progress.
