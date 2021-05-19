@@ -3,3 +3,8 @@ __pycache__
 verify_sanger.egg-info/**
 *.pkl
 
+example data/.ipynb_checkpoints/**
+
+*.ab1
+*.csv
+*.gb
