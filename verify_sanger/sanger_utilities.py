@@ -733,10 +733,10 @@ def slice_sanger(record1, b0=0, b1=None):
         
     # This method doesn't support negative number indices, 
     #     or b0, b1>=len(record1)
-    if (b0<0) or (b1>=len(record1)):
-        raise ValueError(f'b0 = {b0} but it must be between 0 and the seqeunce length - 1 ({len(record1)-1})')
-    if (b1<0) or (b1>=len(record1)):
-        raise ValueError(f'b1 = {b1} but it must be between 0 and the seqeunce length - 1 ({len(record1)-1})')
+    if (b0<0) or (b0>len(record1)):
+        raise ValueError(f'b0 = {b0} but it must be between 0 and the seqeunce length ({len(record1)})')
+    if (b1<0) or (b1>len(record1)):
+        raise ValueError(f'b1 = {b1} but it must be between 0 and the seqeunce length ({len(record1)})')
     
     # Built-in slicing handles sequenc and quality information
     new_record = record1[b0: b1]
