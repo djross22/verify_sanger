@@ -173,13 +173,10 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     """
     This method performs a pairwise alignment of two very similar reads.
     
-    The method first trims the low-quality reads from the ends of each read
-    (if trim != None), and then aligns record1 with record 2
-    
     Parameters
     ----------
     record1, record2 : Biopython sequence objects to be aligned
-        record1 and record2 must have with phred_quality annotation for trimming
+        record2 must have with phred_quality annotation if find_consensus is True
         e.g. created from raw Sanger data via 'record1 = SeqIO.read(x, "abi")'
     
     verbose : Boolean
