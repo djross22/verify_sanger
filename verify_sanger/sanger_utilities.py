@@ -197,9 +197,8 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
 
     Returns
     -------
-    align1 : 
-    the resulting alignments, as a Bio.Align.PairwiseAlignments object
-        (an iterator over pairwise alignments)
+    align1 : the resulting alignment, as a Bio.Align.PairwiseAlignment object
+        the zeroth element from the iterator from the pairwise alignment call
         
     """
     
