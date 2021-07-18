@@ -6,6 +6,7 @@ Created on Mon May 10 20:42:42 2021
 """
 import os
 import glob
+import copy
 
 import pandas as pd
 import numpy as np
@@ -196,6 +197,7 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
 
     Returns
     -------
+    align1 : 
     the resulting alignments, as a Bio.Align.PairwiseAlignments object
         (an iterator over pairwise alignments)
         
@@ -825,21 +827,29 @@ def sanger_reverse_complement(record1):
     return new_record
 
 
-def ungap_seqrecord(record1):
+def ungap_seqrecord(record1, inplace=False):
     base_array = np.array([x for x in f'{record1.seq}'])
     remove_list = np.where(base_array=='-')[0]
     
+    if inplace:
+        new_record = record1
+    else:
+        new_record = copy.deepcopy(record1)
+        
     new_anotations = {}
-    for key in record1.letter_annotations.keys():
-        new_val = np.delete(record1.letter_annotations[key], remove_list)
+    for key in new_record.letter_annotations.keys():
+        new_val = np.delete(new_record.letter_annotations[key], remove_list)
         new_anotations[key] = new_val
     
-    record1.letter_annotations = {}
+    new_record.letter_annotations = {}
     
-    record1.seq = record1.seq.ungap('-')
-    record1.letter_annotations = new_anotations
+    new_record.seq = new_record.seq.ungap('-')
+    new_record.letter_annotations = new_anotations
     
-    return record1
+    if inplace:
+        return
+    else:
+        return new_record
 
 
 def plot_sanger(sequence, start_base, end_base, ax, 
