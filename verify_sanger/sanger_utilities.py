@@ -748,12 +748,7 @@ def slice_sanger(record1, b0=0, b1=None):
     #TODO: transfer other properties/attributes
     
     # left and right edges of each chromatogram peak
-    peak_left = peak_locations
-    peak_left = (peak_left[:-1] + peak_left[1:])/2
-    peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
-    peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
-    peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
-    peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
+    peak_left, peak_right = peak_edges(peak_locations)
     
     # new start and end of chromatogram
     chrom_start = peak_left[b0]
@@ -766,6 +761,35 @@ def slice_sanger(record1, b0=0, b1=None):
         new_record.annotations["abif_raw"][ch] = raw_data[ch][chrom_start: chrom_end+1]
         
     return new_record
+
+
+def peak_edges(peak_locations):
+    """
+    Method to get the left and right edges of chromatogram peaks, based on the
+    input array of peak centers
+
+    Parameters
+    ----------
+    peak_locations : np.array
+        1D array of positions of peak centers in Sagner chromatogram data.
+
+    Returns
+    -------
+    peak_left : np.array
+        1D array of positions of left edges of Sanger chromatogram peaks
+    peak_right : np.array
+        1D array of positions of right edges of Sanger chromatogram peaks
+
+    """
+    
+    peak_left = peak_locations
+    peak_left = (peak_left[:-1] + peak_left[1:])/2
+    peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
+    peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
+    peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
+    peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
+    
+    return peak_left, peak_right
 
 
 def sanger_reverse_complement(record1):
@@ -858,12 +882,7 @@ def plot_sanger(sequence, start_base, end_base, ax,
         channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
         
         # left and right edges of each chromatogram peak
-        peak_left = peak_locations
-        peak_left = (peak_left[:-1] + peak_left[1:])/2
-        peak_right = np.append( peak_left, peak_locations[-1] + 1/2*(peak_left[-1] - peak_left[-2]) )
-        peak_left = np.insert( peak_left, 0, peak_locations[0] - 1/2*(peak_left[1] - peak_left[0]) )
-        peak_left = np.array([int(np.round(x)) if x>0 else 0 for x in peak_left])
-        peak_right = np.array([int(np.round(x)) if x>0 else 0 for x in peak_right])
+        peak_left, peak_right = peak_edges(peak_locations)
     
     # Called sequence
     dna_seq = str(sequence.seq)
