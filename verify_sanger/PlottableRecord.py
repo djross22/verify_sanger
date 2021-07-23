@@ -34,27 +34,27 @@ class PlottableRecord(SeqRecord):
             peak_locations = np.array(raw_data['PLOC1'])
             peak_left, peak_right = peak_edges(peak_locations)
             
-            self._chrom_x = []
-            self._chrom_g = []
-            self._chrom_a = []
-            self._chrom_t = []
-            self._chrom_c = []
+            chrom_x = []
+            chrom_g = []
+            chrom_a = []
+            chrom_t = []
+            chrom_c = []
             for i, (left, right) in enumerate(zip(peak_left, peak_right)):
-                for y_data, y_list in zip(channel_data, [self._chrom_g, self._chrom_a, 
-                                                         self._chrom_t, self._chrom_c]):
+                for y_data, y_list in zip(channel_data, [chrom_g, chrom_a, 
+                                                         chrom_t, chrom_c]):
                     y = y_data[left:right+1]
                     y_list.append(np.array(y))
                 x = np.linspace(i+0.5, i+1.5, len(y))
-                self._chrom_x.append(x)
+                chrom_x.append(x)
                 
-            self._chrom_x = np.array(self._chrom_x)
-            self._chrom_g = np.array(self._chrom_g)
-            self._chrom_a = np.array(self._chrom_a)
-            self._chrom_t = np.array(self._chrom_t)
-            self._chrom_c = np.array(self._chrom_c)
+            chrom_x = np.array(chrom_x)
+            chrom_g = np.array(chrom_g)
+            chrom_a = np.array(chrom_a)
+            chrom_t = np.array(chrom_t)
+            chrom_c = np.array(chrom_c)
             
-            self._chrom_data = [self._chrom_x, self._chrom_g, self._chrom_a, 
-                                self._chrom_t, self._chrom_c]
+            self._chrom_data = [chrom_x, chrom_g, chrom_a, 
+                                chrom_t, chrom_c]
             
     
     def chromatogram_plot_data(self, start=0, end=None):
