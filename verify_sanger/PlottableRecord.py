@@ -11,17 +11,19 @@ from Bio.SeqRecord import SeqRecord
 # sanger_channels correspond to the ABI data traces for the letters: G, A, T, C
 sanger_channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
 
+
 class PlottableRecord(SeqRecord):
     def __init__(self, input_record):
-        self.description = input_record.description
-        self.id = input_record.id
-        self.name = input_record.name
-        self._seq = input_record.seq
-        
-        self._per_letter_annotations = input_record._per_letter_annotations
-        
-        #for k in input_record.letter_annotations.keys():
-        #    self.letter_annotations[k] = input_record.letter_annotations[k]
+        super().__init__(
+            seq=input_record.seq,
+            id=input_record.id,
+            name=input_record.name,
+            description=input_record.description,
+            dbxrefs=input_record.dbxrefs,
+            features=input_record.features,
+            annotations=input_record.annotations,
+            letter_annotations=input_record.letter_annotations,
+            )
         
         self.init_chrom_plot_data(input_record)
         
