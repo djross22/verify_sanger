@@ -36,6 +36,7 @@ plt.rcParams['ytick.labelsize'] = 16
 plt.rcParams['legend.fontsize'] = 14
 plt.rcParams['legend.edgecolor'] = 'k'
 
+# sanger_channels correspond to the ABI data traces for the letters: G, A, T, C
 sanger_channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
 
 
