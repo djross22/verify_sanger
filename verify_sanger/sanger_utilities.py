@@ -852,7 +852,7 @@ def ungap_seqrecord(record1, inplace=False):
         return new_record
 
 
-def plot_sanger(sequence, start_base, end_base, ax, 
+def plot_sanger(record, start_base, end_base, ax, 
                 ax2=None, 
                 offset=0, 
                 include_chromatograms=True, 
@@ -862,6 +862,11 @@ def plot_sanger(sequence, start_base, end_base, ax,
                 include_coverage=False,
                 include_quality=True,
                 ref_seq_plot=False):
+    
+    # Don't show y-axis ticks
+    ax.set_yticks([])
+    if ax2 is not None:
+        ax2.set_yticks([])
     
     if ref_seq_plot:
         include_quality = False
@@ -874,32 +879,21 @@ def plot_sanger(sequence, start_base, end_base, ax,
         letters_in_middle = False
         
     # start_base and end_base are given in biology notation, i.e. first base of sequence is "1" (not "0")
+    # Also, end_base is the last plotted base, not the last+1
     if start_base<1:
         start_base = 1
-    if end_base>len(sequence):
-        end_base = len(sequence)
+    if end_base>len(record):
+        end_base = len(record)
     
+    # Plot the chromatogram data
     if include_chromatograms :
-        # chromatogram data
-        raw_data = sequence.annotations["abif_raw"]
-        channel_data = [raw_data[x] for x in sanger_channels]
-        peak_locations = np.array(raw_data['PLOC1'])
-        pal = sns.color_palette('dark')
+        chrom_data = record.chromatogram_plot_data(start_base-1, end_base)
         
+        pal = sns.color_palette('dark')
         channel_colors = [pal[0]] + [pal[1]] + [pal[-1]] + [pal[8]]
         
-        # left and right edges of each chromatogram peak
-        peak_left, peak_right = peak_edges(peak_locations)
-    
-    # Called sequence
-    dna_seq = str(sequence.seq)
-    
-    # Plot the quality score and coverage behind everything else 
-    base_positions = [i for i in range(start_base, end_base+1)]
-    base_calls = dna_seq[start_base-1:end_base]
-    ax.set_yticks([])
-    qual_x = np.array( [ np.array([x - 0.5]*2) for x in base_positions ] ).flatten()
-    qual_x = np.append(qual_x, [base_positions[-1]+0.5]*2)
+        for y, c in zip(chrom_data[1:], channel_colors):
+            ax2.plot(chrom_data[0], y, color=c);
     
     if (end_base - start_base) < 200:
         if letters_on_bottom or letters_on_top:
@@ -908,12 +902,11 @@ def plot_sanger(sequence, start_base, end_base, ax,
     else:
         linewidth = 0.5
         
-    # Quality scores
+    # Plot the quality score (behind everything else) 
     if include_quality:
-        qual = sequence.letter_annotations['phred_quality']
-        qual_y = np.array( [ np.array([x]*2) for x in qual[start_base-1:end_base] ] ).flatten()
-        qual_y = np.append(qual_y, 0)
-        qual_y = np.insert(qual_y, 0, 0)
+        qual_data = record.quality_plot_data(start_base-1, end_base)
+        qual_x = qual_data[0]
+        qual_y = qual_data[1]
         if is_trimmed:
             color = sns.color_palette()[3]
             f_alpha = 0.05
@@ -924,15 +917,17 @@ def plot_sanger(sequence, start_base, end_base, ax,
             l_alpha = 1
         ax.fill_between(qual_x+offset, qual_y, color=color, alpha=f_alpha, zorder=-20)
         ax.plot(qual_x[1:-1]+offset, qual_y[1:-1], color=color, alpha=l_alpha, zorder=-19, linewidth=linewidth)
+    
+    # Plot the sequence coverage (behind everything else)
     if include_coverage:
-        cover = sequence.letter_annotations['coverage']
-        y = np.array( [ np.array([x]*2) for x in cover[start_base-1:end_base] ] ).flatten()
-        y = np.append(y, 0)
-        y = np.insert(y, 0, 0)
-        y = y * max(qual_y)/max(y) / 3
+        cover_data = record.coverage_plot_data(start_base-1, end_base)
+        cover_x = cover_data[0]
+        cover_y = cover_data[1]
+        
+        cover_y = cover_y * max(qual_y)/max(cover_y) / 3
         color = sns.color_palette()[0]
-        ax.fill_between(qual_x+offset, y, color=color, alpha=f_alpha, zorder=-10)
-        ax.plot(qual_x[1:-1]+offset, y[1:-1], color=color, alpha=l_alpha, zorder=-9, linewidth=linewidth)
+        ax.fill_between(cover_x+offset, cover_y, color=color, alpha=f_alpha, zorder=-10)
+        ax.plot(cover_x[1:-1]+offset, cover_y[1:-1], color=color, alpha=l_alpha, zorder=-9, linewidth=linewidth)
     
     ax.autoscale(enable=True)
     ylim = ax.get_ylim()
@@ -952,28 +947,19 @@ def plot_sanger(sequence, start_base, end_base, ax,
         ax.tick_params(labeltop=False)
         ax.tick_params(labelbottom=False)
         
-    for center, base in zip(base_positions, base_calls):
+    # Label x-axis with called sequence
+    dna_seq = str(record.seq)
+    base_calls = dna_seq[start_base-1:end_base]
+    for center, base in enumerate(base_calls):
         if letters_on_bottom:
-            ax.text(center+offset, -0.03, base, horizontalalignment='center', verticalalignment='top',
+            ax.text(center+offset+1, -0.03, base, horizontalalignment='center', verticalalignment='top',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
         if letters_on_top:
-            ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
+            ax.text(center+offset+1, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
         if letters_in_middle:
-            ax.text(center+offset, 0.5, base, horizontalalignment='center', verticalalignment='center',
+            ax.text(center+offset+1, 0.5, base, horizontalalignment='center', verticalalignment='center',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
-    
-    if ax2 is not None:
-        ax2.set_yticks([])
-        
-    if include_chromatograms:
-        for center, base in zip(base_positions, base_calls):
-            left = peak_left[center-1]
-            right = peak_right[center-1]
-            for y_data, c in zip(channel_data, channel_colors):
-                y = y_data[left:right+1]
-                x = np.linspace(center-0.5, center+0.5, len(y)) + offset
-                ax2.plot(x, y, color=c, alpha=alpha);
     
     
 def translate_with_gaps(record1):
