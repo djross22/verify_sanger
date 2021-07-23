@@ -5,6 +5,7 @@ Created on Sun Jul 18 19:42:27 2021
 @author: djross
 """
 
+import numbers
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 
@@ -56,6 +57,33 @@ class PlottableRecord(SeqRecord):
             self._chrom_data = [chrom_x, chrom_g, chrom_a, 
                                 chrom_t, chrom_c]
             
+    
+    def __getitem__(self, index):
+        # If index is an integer, Instead of super() behavior (return single letter),
+        #     return PlottableRecord object with a sequence of length 1.
+        if isinstance(index, numbers.Integral):
+            index = slice(index, index+1)
+        new_record = SeqRecord(
+            seq=self.seq,
+            id=self.id,
+            name=self.name,
+            description=self.description,
+            dbxrefs=self.dbxrefs,
+            features=self.features,
+            annotations=self.annotations,
+            letter_annotations=self.letter_annotations,
+            )
+        new_record = new_record[index.start:index.stop:index.step]
+        new_record = PlottableRecord(new_record)
+        
+        # Slicing the chromatogram data:
+        new_data = [x[index.start:index.stop:index.step] for x in self._chrom_data]
+        x_shift = [x[0]-i-0.5 for i, x in enumerate(new_data[0])]
+        new_data[0] = new_data[0] - x_shift
+        
+        new_record._chrom_data = new_data
+        
+        return new_record
     
     def chromatogram_plot_data(self, start=0, end=None):
         if end == None:
