@@ -27,6 +27,7 @@ class PlottableRecord(SeqRecord):
             )
         
         self.init_chrom_plot_data(input_record)
+        self.coverage = [0 if s == '-' else 1 for s in self.seq]
         
     def init_chrom_plot_data(self, input_record):
         if 'abif_raw' in input_record.annotations.keys():
@@ -114,9 +115,8 @@ class PlottableRecord(SeqRecord):
             end = len(self._chrom_data[0])
         
         cover_x = qual_cover_x(start, end)
-        cover = [0 if s == '-' else 1 for s in self.seq]
         
-        cover_y = np.array( [ np.array([x]*2) for x in cover[start:end] ] ).flatten()
+        cover_y = np.array( [ np.array([x]*2) for x in self.coverage[start:end] ] ).flatten()
         cover_y = np.append(cover_y, 0)
         cover_y = np.insert(cover_y, 0, 0)
         
