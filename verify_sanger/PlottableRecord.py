@@ -89,6 +89,29 @@ class PlottableRecord(SeqRecord):
         
         return new_record
     
+    
+    def reverse_complement(self):
+        new_record = super().reverse_complement()
+        
+        new_record = PlottableRecord(new_record)
+        
+        new_record.coverage = self.coverage[::-1]
+        
+        new_data = []
+        
+        data = self._chrom_data[0][::-1]
+        x_shift = [x[0]-i-0.5 for i, x in enumerate(data)]
+        new_data.append(data - x_shift)
+        
+        for data in self._chrom_data[:0:-1]:
+            data = [d[::-1] for d in data[::-1]]
+            new_data.append(data)
+            
+        new_record._chrom_data = new_data
+        
+        return new_record
+    
+    
     @classmethod
     def make_aligned_record(cls, input_record, aligned_seq):
         """
