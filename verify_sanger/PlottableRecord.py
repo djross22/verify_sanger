@@ -88,7 +88,7 @@ class PlottableRecord(SeqRecord):
     
     def chromatogram_plot_data(self, start=0, end=None):
         if end == None:
-            end = len(self._chrom_data[0])
+            end = len(self)
             
         out_data = [x[start:end] for x in self._chrom_data]
         out_data = [np.array([item for sublist in data for item in sublist]) for data in out_data]
@@ -98,7 +98,7 @@ class PlottableRecord(SeqRecord):
     
     def quality_plot_data(self, start=0, end=None):
         if end == None:
-            end = len(self._chrom_data[0])
+            end = len(self)
         
         qual_x = qual_cover_x(start, end)
         
@@ -112,7 +112,7 @@ class PlottableRecord(SeqRecord):
     
     def coverage_plot_data(self, start=0, end=None):
         if end == None:
-            end = len(self._chrom_data[0])
+            end = len(self)
         
         cover_x = qual_cover_x(start, end)
         
