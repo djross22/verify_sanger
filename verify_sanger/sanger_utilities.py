@@ -782,6 +782,7 @@ def plot_sanger(record, start_base, end_base, ax,
     ax.set_yticks([])
     if ax2 is not None:
         ax2.set_yticks([])
+        ax2.get_shared_x_axes().join(ax, ax2)
     
     if ref_seq_plot:
         include_quality = False
