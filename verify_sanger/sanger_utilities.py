@@ -865,15 +865,16 @@ def plot_sanger(record, start_base, end_base, ax,
     # Label x-axis with called sequence
     dna_seq = str(record.seq)
     base_calls = dna_seq[start_base-1:end_base]
-    for center, base in enumerate(base_calls):
+    base_positions = [i+1 for i in range(start_base-1, end_base)]
+    for center, base in zip(base_positions, base_calls):
         if letters_on_bottom:
-            ax.text(center+offset+1, -0.03, base, horizontalalignment='center', verticalalignment='top',
+            ax.text(center+offset, -0.03, base, horizontalalignment='center', verticalalignment='top',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
         if letters_on_top:
-            ax.text(center+offset+1, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
+            ax.text(center+offset, 1.02, base, horizontalalignment='center', verticalalignment='bottom',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
         if letters_in_middle:
-            ax.text(center+offset+1, 0.5, base, horizontalalignment='center', verticalalignment='center',
+            ax.text(center+offset, 0.5, base, horizontalalignment='center', verticalalignment='center',
                    fontname="Courier New", size=20, transform=trans, alpha=alpha)
     
     
