@@ -87,6 +87,9 @@ class PlottableRecord(SeqRecord):
         
         new_record._chrom_data = new_data
         
+        # Slicing the coverage
+        new_record.coverage = self.coverage[index.start:index.stop:index.step]
+        
         return new_record
     
     
