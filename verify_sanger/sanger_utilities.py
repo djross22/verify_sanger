@@ -17,6 +17,8 @@ from Bio import SeqIO
 from Bio import AlignIO
 from Bio.SeqRecord import SeqRecord
 
+from verify_sanger.PlottableRecord import PlottableRecord
+
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 from matplotlib.ticker import MultipleLocator
@@ -359,10 +361,11 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         mismatch_ind = np.array([])
         
     if find_consensus:
-        # Make the consensus sequence into a Bio.SeqRecord object
+        # Make the consensus sequence into a PlottableRecord object
         consensus_seq = SeqRecord(Seq(consensus_seq))
         consensus_seq.letter_annotations['phred_quality'] = consensus_qual
-        consensus_seq.letter_annotations['coverage'] = coverage
+        consensus_seq = PlottableRecord(consensus_seq)
+        consensus_seq.coverage = coverage
     
     # Save results as properties of the alignment 
     if find_consensus:
