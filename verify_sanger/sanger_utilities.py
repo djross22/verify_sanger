@@ -17,6 +17,7 @@ from Bio import SeqIO
 from Bio import AlignIO
 from Bio.SeqRecord import SeqRecord
 
+from verify_sanger.PlottableAlignment import PlottableAlignment
 from verify_sanger.PlottableRecord import PlottableRecord
 
 import matplotlib.pyplot as plt
