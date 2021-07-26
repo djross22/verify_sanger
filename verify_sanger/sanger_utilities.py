@@ -368,7 +368,8 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         consensus_seq = PlottableRecord(consensus_seq)
         consensus_seq.coverage = coverage
     
-    # Save results as properties of the alignment 
+    # Save results as a PlottableAlignment
+    align1 = PlottableAlignment(align1)
     if find_consensus:
         align1.consensus_seq = consensus_seq
     align1.mismatch_ind = mismatch_ind
