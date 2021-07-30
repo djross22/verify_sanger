@@ -366,30 +366,6 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     return align1
 
 
-def make_blocks(block, breaks):
-    if len(breaks)>0:
-        temp = []
-        next_x = 0
-        for x in breaks:
-            y = block[next_x: x]
-            if len(y)>0:
-                temp.append([y[0], y[-1]])
-            else:
-                temp.append([block[0], block[-1]])
-            next_x = x + 1
-        y = block[next_x: ]
-        if len(y)>0:
-            temp.append([y[0], y[-1]])
-        else:
-            temp.append([block[0], block[-1]])
-    else:
-        if len(block)>0:
-            temp = [ [block[0], block[-1]] ]
-        else:
-            temp = None
-    return temp
-
-
 def zoom_out_plot(align1, title=None, 
                   seq1_label='Sequence 1:', seq2_label='Sequence 2:'):
     f_block = align1.f_ind
