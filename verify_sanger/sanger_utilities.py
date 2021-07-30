@@ -732,7 +732,9 @@ def ungap_seqrecord(record1, inplace=False):
         return new_record
 
 
-def plot_sanger(record, start_base, end_base, ax, 
+def plot_sanger(record, ax, 
+                start_base=0, 
+                end_base=None, 
                 ax2=None, 
                 offset=0, 
                 include_chromatograms=True, 
@@ -742,6 +744,9 @@ def plot_sanger(record, start_base, end_base, ax,
                 include_coverage=False,
                 include_quality=True,
                 ref_seq_plot=False):
+    
+    if end_base is None:
+        end_base = len(record)
     
     # Don't show y-axis ticks
     ax.set_yticks([])
