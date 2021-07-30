@@ -261,9 +261,8 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     count = match_str.count('.')
     if verbose: print(f'{count} mismatches in alignment')
     
-    # Find mapping between indices for consensus and record1
+    # Remake list of quality scores for record1, with gaps based on alignment
     f_qual = []
-    f_ind = []
     i = 0
     if find_consensus:
         if 'phred_quality' in record1.letter_annotations.keys():
@@ -277,26 +276,19 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         if ch == '-':
             if start_gap:
                 q = 0
-                ind = 'none' #-1
             else:
                 if i < len(input_qual):
                     q = (input_qual[i-1] + input_qual[i])/2
-                    ind = 'gap' #(i-1 + i)/2
                 else:
                     q = 0
-                    ind = 'none' #-1
         else:
             q = input_qual[i]
-            ind = i
             i += 1
             start_gap = False
         f_qual.append(q)
-        f_ind.append(ind)
-    f_ind = np.array(f_ind, dtype=object)
     
-    # Find mapping between indices for consensus and record2
+    # Remake list of quality scores for record2, with gaps based on alignment
     r_qual = []
-    r_ind = []
     i = 0
     if find_consensus:
         input_qual = record2.letter_annotations['phred_quality']
@@ -307,22 +299,16 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         if ch == '-':
             if start_gap:
                 q = 0
-                ind = 'none' #-1
             else:
                 if i < len(input_qual):
                     q = (input_qual[i-1] + input_qual[i])/2
-                    ind = 'gap' #(i-1 + i)/2
                 else:
                     q = 0
-                    ind = 'none' #-1
         else:
             q = input_qual[i]
-            ind = i
             i += 1
             start_gap = False
         r_qual.append(q)
-        r_ind.append(ind)
-    r_ind = np.array(r_ind, dtype=object)
     
     # Find consensus (using quality scores), coverage, 
     #     and the indices for any mismatches
@@ -367,17 +353,15 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         consensus_seq.letter_annotations['phred_quality'] = consensus_qual
         consensus_seq = PlottableRecord(consensus_seq)
         consensus_seq.coverage = coverage
+    else:
+        consensus_seq = None
     
     # Save results as a PlottableAlignment
-    align1 = PlottableAlignment(align1)
-    if find_consensus:
-        align1.consensus_seq = consensus_seq
-    align1.mismatch_ind = mismatch_ind
-    align1.f_ind = f_ind
-    align1.r_ind = r_ind
-    align1.record1 = record1
-    align1.record2 = record2
-    align1.align_str = align_str
+    align1 = PlottableAlignment(input_alignment=align1, 
+                                consensus_seq=consensus_seq,
+                                mismatch_ind=mismatch_ind,
+                                record1=record1,
+                                record2=record2)
     
     return align1
 
