@@ -50,11 +50,11 @@ class PlottableRecord(SeqRecord):
                 x = np.linspace(i+0.5, i+1.5, len(y))
                 chrom_x.append(x)
                 
-            chrom_x = np.array(chrom_x)
-            chrom_g = np.array(chrom_g)
-            chrom_a = np.array(chrom_a)
-            chrom_t = np.array(chrom_t)
-            chrom_c = np.array(chrom_c)
+            chrom_x = np.array(chrom_x, dtype=object)
+            chrom_g = np.array(chrom_g, dtype=object)
+            chrom_a = np.array(chrom_a, dtype=object)
+            chrom_t = np.array(chrom_t, dtype=object)
+            chrom_c = np.array(chrom_c, dtype=object)
             
             self._chrom_data = [chrom_x, chrom_g, chrom_a, 
                                 chrom_t, chrom_c]
@@ -171,12 +171,12 @@ class PlottableRecord(SeqRecord):
         new_data = []
         
         data = input_record._chrom_data[0]
-        data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([0, 1])) )
+        data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([0, 1])), dtype=object )
         x_shift = [x[0]-i-0.5 for i, x in enumerate(data)]
         new_data.append(data - x_shift)
         
         for data in input_record._chrom_data[1:]:
-            data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([np.nan, np.nan])) )
+            data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([np.nan, np.nan])), dtype=object )
             new_data.append(data)
             
         new_record._chrom_data = new_data
