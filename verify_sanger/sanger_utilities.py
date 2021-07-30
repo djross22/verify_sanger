@@ -368,17 +368,7 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
 
 def zoom_out_plot(align1, title=None, 
                   seq1_label='Sequence 1:', seq2_label='Sequence 2:'):
-    f_block = align1.f_ind
-    f_block = f_block[f_block!='none']
-    f_breaks = np.where(f_block=='gap')[0]
-    r_block = align1.r_ind
-    r_block = r_block[r_block!='none']
-    r_breaks = np.where(r_block=='gap')[0]
-    f_block = make_blocks(f_block, f_breaks)
-    r_block = make_blocks(r_block, r_breaks)
-    f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
-    r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
-    
+        
     plt.rcParams["figure.figsize"] = [12, 4]
     fig, axs = plt.subplots(3, 1)
     if title is not None:
@@ -393,16 +383,14 @@ def zoom_out_plot(align1, title=None,
     r_seq = align1.record2
     consensus_seq = align1.consensus_seq
     
-    plot_sanger(consensus_seq, 1, len(consensus_seq), axs[0], ax2=ax2[0], offset=0,
+    plot_sanger(consensus_seq, axs[0], ax2=ax2[0], 
                 include_chromatograms=False, include_coverage=True, letters_on_bottom=False)
     
-    for b, x in zip(f_block, f_offset):
-        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x, 
-                    include_chromatograms=False, letters_on_bottom=False)
+    plot_sanger(f_seq, axs[1], ax2=ax2[1], 
+                include_chromatograms=False, letters_on_bottom=False)
     
-    for b, x in zip(r_block, r_offset):
-        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x, 
-                    include_chromatograms=False, letters_on_bottom=False)
+    plot_sanger(r_seq, axs[2], ax2=ax2[2], 
+                include_chromatograms=False, letters_on_bottom=False)
     
     axs[0].tick_params(labelbottom=False)
     axs[1].tick_params(labelbottom=False)
