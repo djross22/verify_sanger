@@ -82,9 +82,12 @@ class PlottableRecord(SeqRecord):
         new_record = PlottableRecord(new_record)
         
         # Slicing the chromatogram data:
-        new_data = [x[index.start:index.stop:index.step] for x in self._chrom_data]
-        x_shift = [x[0]-i-0.5 for i, x in enumerate(new_data[0])]
-        new_data[0] = new_data[0] - x_shift
+        if self._chrom_data is not None:
+            new_data = [x[index.start:index.stop:index.step] for x in self._chrom_data]
+            x_shift = [x[0]-i-0.5 for i, x in enumerate(new_data[0])]
+            new_data[0] = new_data[0] - x_shift
+        else:
+            new_data = None
         
         new_record._chrom_data = new_data
         
