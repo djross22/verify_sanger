@@ -830,18 +830,14 @@ def find_mutations_vs_reference(ref_alignment, ref_feature, verbose=True):
     if reference_feat is None:
         return None, None
     
-    # These are the start and end positions of the insert CDS in the reference sequence 
-    ref_b0 = reference_feat.location.start.position
-    ref_b1 = reference_feat.location.end.position
+    # These are the start and end positions of the insert CDS in the aligned reference sequence 
+    ref_start = reference_feat.location.start.position
+    ref_end = reference_feat.location.end.position
     
-    # These are the start and end positions of the insert CDS in the alignment/consensus sequence
-    ref_start = np.where(ref_alignment.f_ind==ref_b0)[0][0]
-    ref_end = np.where(ref_alignment.f_ind==ref_b1)[0][0]
-    
-    ref_dna = ref_alignment.record1[ref_b0: ref_b1]
+    ref_dna = ref_alignment.record1[ref_start: ref_end]
     test_dna = ref_alignment.consensus_seq[ref_start: ref_end]
     
-    ref_aminos = ref_dna.translate()
+    ref_aminos = translate_with_gaps(ref_dna)
     test_aminos = translate_with_gaps(test_dna)
     
     # The same aligner settings used for Sanger sequence alignments
@@ -867,12 +863,11 @@ def mutation_codes_from_alignment(align1):
     substitution_codes = []
     indel_codes = []
     for ind in align1.mismatch_ind:
-        wt_pos = align1.f_ind[ind]
         wt_amino = align1.align_str[0][ind]
         new_amino = align1.align_str[2][ind]
         if align1.align_str[1][ind] == '.':
             # Substitution
-            substitution_codes.append(f'{wt_amino}{wt_pos+1}{new_amino}')
+            substitution_codes.append(f'{wt_amino}{ind+1}{new_amino}')
         elif align1.align_str[1][ind] == '-':
             # Insertion or deletion
             #TODO: remove duplicate entries in indel_codes for 
@@ -890,12 +885,10 @@ def mutation_codes_from_alignment(align1):
                     p2 += 1
                     ch = align1.align_str[0][p2]
     
-                wt_pos1 = align1.f_ind[p1]
-                wt_pos2 = align1.f_ind[p2]
-                wt_amino1 = f'{align1.record1.seq}'[wt_pos1]
-                wt_amino2 = f'{align1.record1.seq}'[wt_pos2]
+                wt_amino1 = f'{align1.record1.seq}'[p1]
+                wt_amino2 = f'{align1.record1.seq}'[p2]
             
-                indel_codes.append(f'{wt_amino1}{wt_pos1+1}_{wt_amino2}{wt_pos2+1}ins{new_amino}')
+                indel_codes.append(f'{wt_amino1}{p1+1}_{wt_amino2}{p2+1}ins{new_amino}')
             elif new_amino == '-':
                 # Deletion
                 p1 = ind
@@ -911,15 +904,13 @@ def mutation_codes_from_alignment(align1):
                     ch = align1.align_str[2][p2]
                 p2 -= 1
     
-                wt_pos1 = align1.f_ind[p1]
-                wt_pos2 = align1.f_ind[p2]
-                wt_amino1 = f'{align1.record1.seq}'[wt_pos1]
-                wt_amino2 = f'{align1.record1.seq}'[wt_pos2]
+                wt_amino1 = f'{align1.record1.seq}'[p1]
+                wt_amino2 = f'{align1.record1.seq}'[p2]
                 
-                if wt_pos1==wt_pos2:
-                    indel_codes.append(f'{wt_amino1}{wt_pos1+1}del')
+                if p1==p2:
+                    indel_codes.append(f'{wt_amino1}{p1+1}del')
                 else:
-                    indel_codes.append(f'{wt_amino1}{wt_pos1+1}_{wt_amino2}{wt_pos2+1}del')
+                    indel_codes.append(f'{wt_amino1}{p1+1}_{wt_amino2}{p2+1}del')
                     
     return substitution_codes, indel_codes
 
