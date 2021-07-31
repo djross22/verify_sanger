@@ -411,30 +411,19 @@ def zoom_out_plot(align1, title=None,
     return fig, axs
         
 
-def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
+def zoom_in_plot(align1, index, zoom_span=10, title=None, verbose=False,
                  seq1_label='Sequence 1:', seq2_label='Sequence 2:',
                  include_chromatograms=True, compare_to_ref=False,
                  anchor_feature=None):
     
-    f_block = align1.f_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
-    f_block = f_block[f_block!='none']
-    f_breaks = np.where(f_block=='gap')[0]
-    r_block = align1.r_ind[zoom_ind-zoom_span: zoom_ind+zoom_span+1]
-    r_block = r_block[r_block!='none']
-    r_breaks = np.where(r_block=='gap')[0]
-    f_block = make_blocks(f_block, f_breaks)
-    r_block = make_blocks(r_block, r_breaks)
-    if (r_block is None) or (f_block is None):
-        if verbose: print('No good sequence blocks to plot')
-        return None, None
-    f_block = [x for x in f_block if 'gap' not in x]
-    r_block = [x for x in r_block if 'gap' not in x]
-    f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
-    r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
+    if isinstance(index, int):
+        index = slice(index, index+1)
+    zoom = slice(index.start-zoom_span, index.stop+zoom_span+1)
+    
     if verbose:
-        print(align1.align_str[0][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
-        print(align1.align_str[1][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
-        print(align1.align_str[2][zoom_ind-zoom_span:zoom_ind+zoom_span+1])
+        print(align1.align_str[0][zoom])
+        print(align1.align_str[1][zoom])
+        print(align1.align_str[2][zoom])
     
     plt.rcParams["figure.figsize"] = [12, 5]
     fig, axs = plt.subplots(3, 1)
@@ -460,24 +449,21 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
                 break
         if anchor_feat is not None:
             anchor_offset = -anchor_feat.location.start.position
-            anchor_offset -= np.where(align1.f_ind==0)[0][0]
         else:
             anchor_offset = 0
     else:
         anchor_offset = 0
     
-    plot_sanger(consensus_seq, zoom_ind-zoom_span+1, zoom_ind+zoom_span+1, 
+    plot_sanger(consensus_seq, zoom.start+1, zoom.stop, 
                 axs[0], ax2=ax2[0], offset=anchor_offset,
                 include_chromatograms=False, include_coverage=True)
     
-    for b, x in zip(f_block, f_offset):
-        plot_sanger(f_seq, b[0]+1, b[1]+1, axs[1], ax2=ax2[1], offset=x+anchor_offset,
-                    letters_on_top=True, include_chromatograms=include_chromatograms,
-                    ref_seq_plot=compare_to_ref)
+    plot_sanger(f_seq, zoom.start+1, zoom.stop, axs[1], ax2=ax2[1], offset=anchor_offset,
+                letters_on_top=True, include_chromatograms=include_chromatograms,
+                ref_seq_plot=compare_to_ref)
     
-    for b, x in zip(r_block, r_offset):
-        plot_sanger(r_seq, b[0]+1, b[1]+1, axs[2], ax2=ax2[2], offset=x+anchor_offset,
-                    letters_on_top=True, include_chromatograms=include_chromatograms)
+    plot_sanger(r_seq, zoom.start+1, zoom.stop, axs[2], ax2=ax2[2], offset=anchor_offset,
+                letters_on_top=True, include_chromatograms=include_chromatograms)
     
     for ax, s_label in zip(axs, ['Consensus:', seq1_label, seq2_label]):
         ax.text(-0.01, 0.5, s_label, horizontalalignment='right', 
@@ -492,9 +478,10 @@ def zoom_in_plot(align1, zoom_ind, zoom_span=10, title=None, verbose=False,
         ax.set_position(box)
         ylim = ax.get_ylim()
         ax.set_ylim(ylim)
-        rect = patches.Rectangle((zoom_ind+0.5+anchor_offset, ylim[0]), 1, ylim[1]-ylim[0], 
-                                 linewidth=1, edgecolor='k', facecolor='r', alpha=0.2, zorder=-100)
-        ax.add_patch(rect)
+        for x in range(index.start, index.stop):
+            rect = patches.Rectangle((x+0.5+anchor_offset, ylim[0]), 1, ylim[1]-ylim[0], 
+                                     linewidth=1, edgecolor='k', facecolor='r', alpha=0.2, zorder=-100)
+            ax.add_patch(rect)
         
     if compare_to_ref:
         axs[1].set_axis_off()
