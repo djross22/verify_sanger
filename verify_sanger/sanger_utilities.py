@@ -526,16 +526,6 @@ def plot_features(record1, ax, x_offset=0):
 def compare_to_ref_plot(align1, title=None, 
                         seq1_label='Reference:', seq2_label='Sanger:',
                         anchor_feature=None):
-    f_block = align1.f_ind
-    f_block = f_block[f_block!='none']
-    f_breaks = np.where(f_block=='gap')[0]
-    r_block = align1.r_ind
-    r_block = r_block[r_block!='none']
-    r_breaks = np.where(r_block=='gap')[0]
-    f_block = make_blocks(f_block, f_breaks)
-    r_block = make_blocks(r_block, r_breaks)
-    f_offset = [ np.where(align1.f_ind==x[0])[0][0]-x[0] for x in f_block ]
-    r_offset = [ np.where(align1.r_ind==x[0])[0][0]-x[0] for x in r_block ]
     
     plt.rcParams["figure.figsize"] = [12, 3]
     fig, axs = plt.subplots(2, 1)
@@ -560,18 +550,16 @@ def compare_to_ref_plot(align1, title=None,
                 anchor_feat = feat
                 break
         if anchor_feat is not None:
-            anchor_offset = -np.mean(f_offset) - anchor_feat.location.start.position
+            anchor_offset = -anchor_feat.location.start.position
         else:
             anchor_offset = 0
     else:
         anchor_offset = 0
         
-    plot_features(align1.record1, axs[0], x_offset=np.mean(f_offset)+anchor_offset)
+    plot_features(align1.record1, axs[0], x_offset=anchor_offset)
     
-    for b, x in zip(r_block, r_offset):
-        if (type(b[0]) is int) and (type(b[1]) is int):
-            plot_sanger(r_seq, b[0]+1, b[1]+1, axs[1], ax2=None, offset=x+anchor_offset, 
-                        include_chromatograms=False, letters_on_bottom=False)
+    plot_sanger(r_seq, axs[1], ax2=None, offset=anchor_offset, 
+                include_chromatograms=False, letters_on_bottom=False)
             
     # Add red rectangles above Sanger quality plot to show locations of 
     #     mismatches and gaps
@@ -579,7 +567,7 @@ def compare_to_ref_plot(align1, title=None,
     rect_h = (ylim[1] - ylim[0])*0.15
     rect_y0 = ylim[1]
     for ind in align1.mismatch_ind:
-        rect_x0 = ind + 0.5 + np.mean(f_offset) + anchor_offset
+        rect_x0 = ind + 0.5 + anchor_offset
         rect = patches.Rectangle((rect_x0, rect_y0), 1, rect_h, 
                                  linewidth=2, edgecolor='r', facecolor='r', 
                                  alpha=1, zorder=100)
