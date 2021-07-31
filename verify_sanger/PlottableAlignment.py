@@ -89,28 +89,39 @@ def map_index_across_gaps(input_index, input_seq, output_seq):
     # After ungapping (removing dashes), the input_seq and output_seq should be the same
     if str(input_seq).replace('-', '') != str(output_seq).replace('-', ''):
         raise ValueError("After ungapping (removing dashes), the input_seq and output_seq must be the same")
+        
+    # If input_seq[input_index] is a gap, find last non-gap and return corresponding index+1
+    input_gap_correction = 0
+    if input_index < len(input_seq):
+        while input_seq[input_index] == '-':
+            if input_index == 0:
+                return 0
+            input_index -= 1
+            input_gap_correction = 1
+            
     
     i = 0
-    match_found = False
-    for j, b in enumerate(output_seq):
-        if i == len(input_seq):
-            # feature spans to the end of the input_sequence
-            j += 1
-            break
-        if b == input_seq[i]:
+    j = 0
+    while (i < len(input_seq)) and (j < len(output_seq)):
+        b1 = input_seq[i]
+        b2 = output_seq[j]
+        if b1 == b2:
             if i == input_index:
-                match_found = True
                 break
             else:
                 i += 1
-        elif (b != '-') and (input_seq[i] != '-'):
+                j += 1
+        elif b1 == '-':
+            i += 1
+        elif b2 == '-':
+            j += 1
+        else:
             # If there is a missmatch, one of the bases should be a dash; if not, something weird has happended 
             #TODO: raise an error here?
             print(f'Unexpected base missmatch in map_index_across_gaps(input_index={input_index})')
     
-    # If input_index == len(input_seq) and ends of sequences correspond
-    if not match_found:
-        j += 1
+    j += input_gap_correction
+        
     return j
         
         
