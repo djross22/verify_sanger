@@ -23,9 +23,8 @@ class PlottableAlignment(PairwiseAlignment):
         self.consensus_seq = consensus_seq
         self.mismatch_ind = mismatch_ind
         
-        align_str = self.align_str
-        self.record1 = PlottableRecord.make_aligned_record(record1, align_str[0])
-        self.record2 = PlottableRecord.make_aligned_record(record2, align_str[2])
+        self.record1 = PlottableRecord.make_aligned_record(self, record1, target=True)
+        self.record2 = PlottableRecord.make_aligned_record(self, record2, target=False)
     
     @property
     def align_str(self):
