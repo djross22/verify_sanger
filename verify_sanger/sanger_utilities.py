@@ -7,6 +7,7 @@ Created on Mon May 10 20:42:42 2021
 import os
 import glob
 import copy
+import numbers
 
 import pandas as pd
 import numpy as np
@@ -416,7 +417,7 @@ def zoom_in_plot(align1, index, zoom_span=10, title=None, verbose=False,
                  include_chromatograms=True, compare_to_ref=False,
                  anchor_feature=None):
     
-    if isinstance(index, int):
+    if isinstance(index, numbers.Integral):
         index = slice(index, index+1)
     zoom = slice(index.start-zoom_span, index.stop+zoom_span+1)
     
@@ -454,15 +455,15 @@ def zoom_in_plot(align1, index, zoom_span=10, title=None, verbose=False,
     else:
         anchor_offset = 0
     
-    plot_sanger(consensus_seq, zoom.start+1, zoom.stop, 
-                axs[0], ax2=ax2[0], offset=anchor_offset,
+    plot_sanger(consensus_seq, axs[0], zoom.start+1, zoom.stop, 
+                ax2=ax2[0], offset=anchor_offset,
                 include_chromatograms=False, include_coverage=True)
     
-    plot_sanger(f_seq, zoom.start+1, zoom.stop, axs[1], ax2=ax2[1], offset=anchor_offset,
+    plot_sanger(f_seq, axs[1], zoom.start+1, zoom.stop, ax2=ax2[1], offset=anchor_offset,
                 letters_on_top=True, include_chromatograms=include_chromatograms,
                 ref_seq_plot=compare_to_ref)
     
-    plot_sanger(r_seq, zoom.start+1, zoom.stop, axs[2], ax2=ax2[2], offset=anchor_offset,
+    plot_sanger(r_seq, axs[2], zoom.start+1, zoom.stop, ax2=ax2[2], offset=anchor_offset,
                 letters_on_top=True, include_chromatograms=include_chromatograms)
     
     for ax, s_label in zip(axs, ['Consensus:', seq1_label, seq2_label]):
