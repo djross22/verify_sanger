@@ -60,7 +60,7 @@ class PlottableRecord(SeqRecord):
             self._chrom_data = [chrom_x, chrom_g, chrom_a, 
                                 chrom_t, chrom_c]
         else:
-            self._chrom_data = [np.array([np.nan]*len(self))]
+            self._chrom_data = None
             
     
     def __getitem__(self, index):
@@ -101,17 +101,19 @@ class PlottableRecord(SeqRecord):
         
         new_record.coverage = self.coverage[::-1]
         
-        new_data = []
-        
-        data = self._chrom_data[0][::-1]
-        x_shift = [x[0]-i-0.5 for i, x in enumerate(data)]
-        new_data.append(data - x_shift)
-        
-        for data in self._chrom_data[:0:-1]:
-            data = [d[::-1] for d in data[::-1]]
-            new_data.append(data)
+        if self._chrom_data is not None:
+            new_data = []
+            data = self._chrom_data[0][::-1]
+            x_shift = [x[0]-i-0.5 for i, x in enumerate(data)]
+            new_data.append(data - x_shift)
             
-        new_record._chrom_data = new_data
+            for data in self._chrom_data[:0:-1]:
+                data = [d[::-1] for d in data[::-1]]
+                new_data.append(data)
+                    
+            new_record._chrom_data = new_data
+        else:
+            new_record._chrom_data = None
         
         return new_record
     
@@ -176,18 +178,21 @@ class PlottableRecord(SeqRecord):
         
         #new_record.coverage = align_data(new_record.coverage, input_seq, aligned_seq, align_str)
         
-        new_data = []
-        
-        data = input_record._chrom_data[0]
-        data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([0, 1])), dtype=object )
-        x_shift = [x[0]-i-0.5 for i, x in enumerate(data)]
-        new_data.append(data - x_shift)
-        
-        for data in input_record._chrom_data[1:]:
-            data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([np.nan, np.nan])), dtype=object )
-            new_data.append(data)
+        if input_record._chrom_data is not None:
+            new_data = []
             
-        new_record._chrom_data = new_data
+            data = input_record._chrom_data[0]
+            data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([0, 1])), dtype=object )
+            x_shift = [x[0]-i-0.5 for i, x in enumerate(data)]
+            new_data.append(data - x_shift)
+            
+            for data in input_record._chrom_data[1:]:
+                data = np.array( align_data(data, input_seq, aligned_seq, fill_item=np.array([np.nan, np.nan])), dtype=object )
+                new_data.append(data)
+                
+            new_record._chrom_data = new_data
+        else:
+            new_record._chrom_data = None
         
         new_record.seq = Seq(aligned_seq)
         
