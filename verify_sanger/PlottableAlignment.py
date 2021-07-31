@@ -23,6 +23,17 @@ class PlottableAlignment(PairwiseAlignment):
         self.consensus_seq = consensus_seq
         self.mismatch_ind = mismatch_ind
         
+        # Initially set record1 and record2 to None (so they exist), 
+        #     then replace them a few lines down
+        self.record1 = None
+        self.record2 = None
+        
+        # Make sure inputs, record1 and record2, are PlottableRecords
+        if not isinstance(record1, PlottableRecord):
+            record1 = PlottableRecord(record1)
+        if not isinstance(record2, PlottableRecord):
+            record2 = PlottableRecord(record2)
+        
         self.record1 = PlottableRecord.make_aligned_record(self, record1, target=True)
         self.record2 = PlottableRecord.make_aligned_record(self, record2, target=False)
     
