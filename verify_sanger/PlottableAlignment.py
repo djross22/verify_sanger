@@ -64,24 +64,53 @@ class PlottableAlignment(PairwiseAlignment):
 
         """
         input_seq = self.target if target else self.query
-        output_seq = self.record1.seq if target else self.record2.seq
+        if target:
+            if self.record1 is not None:
+                output_seq = self.record1.seq
+            else:
+                output_seq = self.align_str[0]
+        else:
+            if self.record2 is not None:
+                output_seq = self.record2.seq
+            else:
+                output_seq = self.align_str[2]
+                
+        return map_index_across_gaps(input_index, input_seq, output_seq)
+    
+    
+def map_index_across_gaps(input_index, input_seq, output_seq):
+    
+    # Make sure the input_index is withing the input sequence
+    if input_index < 0:
+        raise ValueError("The input_index ({input_index}) must be non-negative")
+    elif input_index > len(input_seq):
+        raise ValueError(f"The input_index ({input_index}) must less than ar equal to the length of the input sequence ({len(input_seq)})")
+    
+    # After ungapping (removing dashes), the input_seq and output_seq should be the same
+    if str(input_seq).replace('-', '') != str(output_seq).replace('-', ''):
+        raise ValueError("After ungapping (removing dashes), the input_seq and output_seq must be the same")
+    
+    i = 0
+    match_found = False
+    for j, b in enumerate(output_seq):
+        if i == len(input_seq):
+            # feature spans to the end of the input_sequence
+            j += 1
+            break
+        if b == input_seq[i]:
+            if i == input_index:
+                match_found = True
+                break
+            else:
+                i += 1
+        elif (b != '-') and (input_seq[i] != '-'):
+            # If there is a missmatch, one of the bases should be a dash; if not, something weird has happended 
+            #TODO: raise an error here?
+            print(f'Unexpected base missmatch in map_index_across_gaps(input_index={input_index})')
+    
+    # If input_index == len(input_seq) and ends of sequences correspond
+    if not match_found:
+        j += 1
+    return j
         
-        # Make sure the input_index is withing the input sequence
-        if input_index < 0:
-            raise ValueError("The input_index ({input_index}) must be non-negative")
-        elif input_index >= len(input_seq):
-            raise ValueError(f"The input_index ({input_index}) must less than the length of the input sequence ({len(input_seq)})")
-        
-        i = 0
-        for j, b in enumerate(output_seq):
-            if b == input_seq[i]:
-                if i == input_index:
-                    break
-                else:
-                    i += 1
-            elif b != '-':
-                # Each base, b, should match or be a dash; if not, something weird has happended 
-                print(f'Unexpected base missmatch in map_coordinate(input_index={input_index}, target={target})')
-        
-        return j
         
