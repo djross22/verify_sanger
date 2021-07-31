@@ -9,6 +9,7 @@ import numbers
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from Bio.SeqFeature import FeatureLocation
 
 # sanger_channels correspond to the ABI data traces for the letters: G, A, T, C
 sanger_channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
@@ -116,23 +117,27 @@ class PlottableRecord(SeqRecord):
     
     
     @classmethod
-    def make_aligned_record(cls, input_record, aligned_seq):
+    def make_aligned_record(cls, alignment, input_record, target=True):
         """
         The method is effectively an alternate constructor for making a new
         PlottableRecord instance based on a sequence alignment
 
         Parameters
         ----------
+        alignment : PlottableAlignment
+            The alignment used to make the aligned sequence record.
         input_record : sequence record, PlotttableRecord or Bio.SeqRecord.SeqRecord
-            The sequence record used as input to the alignment.
-        aligned_seq : DNA sequence, Bio.Seq.Seq or str
-            The aligned sequence, with possible gaps.
+            The sequence record used as input to the alignment, 
+            used to transfer annotations, features, etc.
+        target : Boolean
+            If True, the aligned record is made from alignment.target; 
+            if False, the aligned record is made from alignment.query.
 
         Raises
         ------
         ValueError
             aligned_seq must result from an alignment of input_record. So, 
-            after ungapping, aligned_seq must be the same sequence as input_record.
+            after ungapping, aligned_seq must be the same sequence as input_seq.
 
         Returns
         -------
@@ -141,13 +146,16 @@ class PlottableRecord(SeqRecord):
             (i.e. gaps insterted into the quality and chromatogram data, etc.).
 
         """
-        
-        aligned_seq = str(aligned_seq)
-        input_seq = str(input_record.seq)
+        if target:
+            aligned_seq = alignment.align_str[0]
+            input_seq = str(alignment.target)
+        else:
+            aligned_seq = alignment.align_str[2]
+            input_seq = str(alignment.query)
         
         # Check that align_str contains the same sequence as input_record, with possible gaps
         if aligned_seq.replace('-', '') != input_seq.replace('-', ''):
-            raise ValueError("After ungapping, aligned_seq must be the same sequence as input_record.")
+            raise ValueError("After ungapping, aligned_seq must be the same sequence as input_seq.")
         
         new_record = SeqRecord(seq=Seq(aligned_seq),
                                id=input_record.id,
@@ -182,6 +190,13 @@ class PlottableRecord(SeqRecord):
         new_record._chrom_data = new_data
         
         new_record.seq = Seq(aligned_seq)
+        
+        # Shift positions of sequence features to match alignment
+        for feat in new_record.features:
+            ind0, ind1 = feat.location.start.position, feat.location.end.position
+            ind0 = alignment.map_coordinate(ind0, target=target)
+            ind1 = alignment.map_coordinate(ind1, target=target)
+            feat.location = FeatureLocation(ind0, ind1)
         
         return new_record
     
