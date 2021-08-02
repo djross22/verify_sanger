@@ -233,6 +233,14 @@ class PlottableRecord(SeqRecord):
         return [qual_x, qual_y]
     
     
+    @property
+    def quality(self):
+        if 'phred_quality' in self.letter_annotations.keys():
+            return self.letter_annotations['phred_quality']
+        else:
+            return None
+    
+    
     def coverage_plot_data(self, start=0, end=None):
         if end == None:
             end = len(self)
