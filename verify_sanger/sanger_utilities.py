@@ -218,8 +218,8 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     aligner.target_internal_extend_gap_score = -3
     aligner.query_internal_open_gap_score = -12
     aligner.query_internal_extend_gap_score = -3
-    #if include_stop:
-    #    aligner.alphabet += '*'
+    if include_stop:
+        aligner.alphabet += '*'
     
     if ungap:
         record1 = ungap_seqrecord(record1)
