@@ -920,6 +920,7 @@ def mutation_codes_from_name(name, added_codes=[]):
     name = name[name.find('(')+1:]
     name = name[:name.rfind(')')]
     codes = name.split('/') + added_codes
+    codes = [x[:x.find('-')] if '-' in x else x for x in codes]
     pos = [int(x[1:-1]) for x in codes]
     df = pd.DataFrame({'codes':codes, 'pos':pos})
     df.sort_values(by='pos', inplace=True)
