@@ -819,6 +819,29 @@ def translate_with_gaps(record1):
     return new_record.translate()
 
 
+def get_sequence_vs_reference(ref_alignment, ref_feature):
+    
+    # Find the feature in the reference SeqRecord from the ref_alignment
+    reference_feat = None
+    for feat in ref_alignment.record1.features:
+        if feat.qualifiers['label'][0] == ref_feature:
+            reference_feat = feat
+            break
+        
+    if reference_feat is None:
+        return None, None
+    
+    # These are the start and end positions of the insert CDS in the aligned reference sequence 
+    ref_start = reference_feat.location.start.position
+    ref_end = reference_feat.location.end.position
+    
+    test_dna = ref_alignment.consensus_seq[ref_start: ref_end]
+    
+    test_aminos = translate_with_gaps(test_dna)
+    
+    return test_dna, test_aminos
+
+
 def find_mutations_vs_reference(ref_alignment, ref_feature, verbose=True):
     
     # Find the feature in the reference SeqRecord from the ref_alignment
