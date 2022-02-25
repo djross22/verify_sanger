@@ -225,7 +225,11 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
         record1 = ungap_seqrecord(record1)
         record2 = ungap_seqrecord(record2)
     alignments = aligner.align(record1.seq, record2.seq)
-    if verbose: print(f'{len(alignments)} alignment(s) found with score: {alignments.score}')
+    if verbose: 
+        try:
+            print(f'{len(alignments)} alignment(s) found with score: {alignments.score}')
+        except OverflowError:
+            print(f'Overflow number of alignment(s) found with score: {alignments.score}')
     
     align1 = alignments[0]
     if verbose: print(f'{align1.aligned}')
