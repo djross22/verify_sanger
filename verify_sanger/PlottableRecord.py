@@ -11,6 +11,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from Bio.SeqFeature import FeatureLocation
 
+from . import PlottableAlignment
+
 # sanger_channels correspond to the ABI data traces for the letters: G, A, T, C
 sanger_channels = ["DATA9", "DATA10", "DATA11", "DATA12"]
 
@@ -122,15 +124,16 @@ class PlottableRecord(SeqRecord):
     
     
     @classmethod
-    def make_aligned_record(cls, alignment, input_record, target=True):
+    def make_aligned_record(cls, alignment, input_record, target=True, letter_annotations_fill=0):
         """
         The method is effectively an alternate constructor for making a new
         PlottableRecord instance based on a sequence alignment
 
         Parameters
         ----------
-        alignment : PlottableAlignment
+        alignment : PlottableAlignment or string
             The alignment used to make the aligned sequence record.
+            If type(alignment) is string, this method 
         input_record : sequence record, PlotttableRecord or Bio.SeqRecord.SeqRecord
             The sequence record used as input to the alignment, 
             used to transfer annotations, features, etc.
@@ -151,12 +154,16 @@ class PlottableRecord(SeqRecord):
             (i.e. gaps insterted into the quality and chromatogram data, etc.).
 
         """
-        if target:
-            aligned_seq = alignment.align_str[0]
-            input_seq = str(alignment.target)
-        else:
-            aligned_seq = alignment.align_str[2]
-            input_seq = str(alignment.query)
+        if type(alignment) is PlottableAlignment.PlottableAlignment:
+            if target:
+                aligned_seq = alignment.align_str[0]
+                input_seq = str(alignment.target)
+            else:
+                aligned_seq = alignment.align_str[2]
+                input_seq = str(alignment.query)
+        elif type(alignment) is str:
+            aligned_seq = alignment
+            input_seq = str(input_record.seq)
         
         # Check that align_str contains the same sequence as input_record, with possible gaps
         if aligned_seq.replace('-', '') != input_seq.replace('-', ''):
@@ -177,7 +184,7 @@ class PlottableRecord(SeqRecord):
         # Loop over all associated lists/arrays that have an entry for 
         #     each base in the sequence
         for k, v in input_record.letter_annotations.items():
-            new_record.letter_annotations[k] = align_data(v, input_seq, aligned_seq)
+            new_record.letter_annotations[k] = align_data(v, input_seq, aligned_seq, fill_item=letter_annotations_fill)
         
         #new_record.coverage = align_data(new_record.coverage, input_seq, aligned_seq, align_str)
         
@@ -314,15 +321,23 @@ def align_data(data, input_seq, aligned_seq, fill_item=0):
         raise ValueError(f"The length of data ({len(data)}) must equal the length of input_seq ({len(input_seq)})")
         
     new_data = []
+    last_data = 0
     for b1 in aligned_seq:
         # gap
         if b1 == '-':
-            new_data.append(fill_item)
+            if fill_item == 'mean':
+                if len(data) == 0:
+                    new_data.append(last_data/2)
+                else:
+                    new_data.append((data[0] + last_data)/2)
+            else:
+                new_data.append(fill_item)
         else:
             if len(data) == 0:
                 raise ValueError(f'Unexpected non-gap base found in aligned_seq ({b1}) after end of data')
             elif b1 == input_seq[0]:
                 new_data.append(data[0])
+                last_data = data[0]
                 data = data[1:]
                 input_seq = input_seq[1:]
             else:
