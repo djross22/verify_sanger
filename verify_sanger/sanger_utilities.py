@@ -236,8 +236,18 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
     align_str = f'{align1}'
     align_str = align_str.split('\n')
     if len(align1.aligned[0])>1:
-        target_str = align_str[0]
+        
+        target_str = ''
+        for s in align_str:
+            if 'target' in s:
+                s = s.replace('target', '')
+                s = s.strip()
+                s = s[s.find(' ')+1:]
+                if ' ' in s:
+                    s = s[:s.find(' ')]
+                target_str += s
         target_str = target_str.strip('-')
+        
         if '--' in target_str:
             if verbose: print('multi-base gap in sequence no. 1')
             #x = target_str.find('--')
@@ -249,6 +259,17 @@ def align_sanger(record1, record2, verbose=True, find_consensus=True,
             #print(f'{x}, {target_str}')
             
         query_str = align_str[2]
+        
+        query_str = ''
+        for s in align_str:
+            if 'query' in s:
+                s = s.replace('query', '')
+                s = s.strip()
+                s = s[s.find(' ')+1:]
+                if ' ' in s:
+                    s = s[:s.find(' ')]
+                query_str += s
+        
         query_str = query_str.strip('-')
         if '--' in query_str:
             if verbose: print('multi-base gap in sequence no. 2')

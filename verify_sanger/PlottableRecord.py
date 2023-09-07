@@ -156,10 +156,31 @@ class PlottableRecord(SeqRecord):
         """
         if type(alignment) is PlottableAlignment.PlottableAlignment:
             if target:
-                aligned_seq = alignment.align_str[0]
+                aligned_seq = ''
+                for s in alignment.align_str:
+                    if 'target' in s:
+                        s = s.replace('target', '')
+                        s = s.strip()
+                        s = s[s.find(' ')+1:]
+                        if ' ' in s:
+                            s = s[:s.find(' ')]
+                        aligned_seq += s
+                aligned_seq = aligned_seq.strip('-')
+                
+                
                 input_seq = str(alignment.target)
             else:
-                aligned_seq = alignment.align_str[2]
+                aligned_seq = ''
+                for s in alignment.align_str:
+                    if 'query' in s:
+                        s = s.replace('query', '')
+                        s = s.strip()
+                        s = s[s.find(' ')+1:]
+                        if ' ' in s:
+                            s = s[:s.find(' ')]
+                        aligned_seq += s
+                aligned_seq = aligned_seq.strip('-')
+                
                 input_seq = str(alignment.query)
         elif type(alignment) is str:
             aligned_seq = alignment
